@@ -11,13 +11,9 @@ from pysolace.messaging.receiver.message_receiver import MessageHandler
 class MessageHandlerImpl(MessageHandler):
     def on_message(self, message: 'InboundMessage'):
         topic = message.get_destination_name()
-        payload_as_bytes = message.get_payload_as_bytes()
-        payload_as_string = message.get_payload_as_string()
-        correlation_id = message.get_correlation_id()
+        payload_str = message.get_payload_as_string()
         print("\n" + f"CALLBACK: Message Received on Topic: {topic}.\n"
-                     f"Message Bytes: {payload_as_bytes} \n"
-                     f"Message String: {payload_as_string} \n"
-                     f"Correlation id: {correlation_id}")
+                     f"Message String: {payload_str} \n"
 
 def direct_message_consume(messaging_service: MessagingService, topic_subscription: str):
     try:
