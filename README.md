@@ -21,4 +21,4 @@ Execute the script of choice and pass the environment variables
 1. If you are reading this and the Solace Python API is still not published, you can install the wheel package from the [Solace Community](https://solace.community/discussion/336/python-whos-in-for-a-real-treat)
 
 ## To-Do
-- [ ] Add loop for publisher message rate
+- [x] Add loop for publisher message rate

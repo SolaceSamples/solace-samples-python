@@ -13,7 +13,7 @@ class MessageHandlerImpl(MessageHandler):
         topic = message.get_destination_name()
         payload_str = message.get_payload_as_string()
         print("\n" + f"CALLBACK: Message Received on Topic: {topic}.\n"
-                     f"Message String: {payload_str} \n"
+                     f"Message String: {payload_str} \n")
 
 def direct_message_consume(messaging_service: MessagingService, topic_subscription: str):
     try:
