@@ -53,5 +53,5 @@ messaging_service.connect_async()
 # Define a Topic subscription 
 topic = "taxinyc/ops/ride/>"
 
-# Direct publish the message
+# Subscribe to the topic
 direct_message_consume(messaging_service, topic)
