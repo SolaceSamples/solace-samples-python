@@ -5,7 +5,7 @@
 1. [Optional] Install virtualenv `python3 -m pip install --user virtualenv`
 1. Clone this repository
 1. [Optional] Setup python virtual environment `python3 -m venv venv`
-1. [Optional] Activate virtual environment:
+1. [Optional] Activate virtual environment:     
     1.1 MacOS: `source venv/bin/activate`   
     1.2 Windows: `source venv/Scripts/activate`
 
