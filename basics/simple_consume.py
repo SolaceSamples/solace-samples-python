@@ -11,7 +11,9 @@ from pysolace.messaging.receiver.message_receiver import MessageHandler
 class MessageHandlerImpl(MessageHandler):
     def on_message(self, message: 'InboundMessage'):
         topic = message.get_destination_name()
+        # NOTE: Check type of msg before get as string
         payload_str = message.get_payload_as_string()
+        # NOTE: Show how to receive header values
         print("\n" + f"CALLBACK: Message Received on Topic: {topic}.\n"
                      f"Message String: {payload_str} \n")
 
@@ -20,9 +22,10 @@ def direct_message_consume(messaging_service: MessagingService, topic_subscripti
         topics = [TopicSubscription.of(topic_subscription)]
 
         # Create a direct message consumer service with the topic subscription and start it
-        direct_receive_service = messaging_service.create_direct_message_receiver_builder()
-        direct_receive_service = direct_receive_service.with_subscriptions(topics).build()
-        direct_receive_service.start()
+        direct_receive_service = messaging_service.create_direct_message_receiver_builder() \
+                                .with_subscriptions(topics) \
+                                .build() \
+                                .start()
 
         # Register a callback message handler
         direct_receive_service.receive_async(MessageHandlerImpl())
@@ -39,8 +42,8 @@ def direct_message_consume(messaging_service: MessagingService, topic_subscripti
 
 # Broker Config
 broker_props = {
-    "solace.messaging.transport.host": os.environ['HOST'],
-    "solace.messaging.service.vpn-name": os.environ['VPN'],
+    "solace.messaging.transport.host": os.environ['SOL_HOST'],
+    "solace.messaging.service.vpn-name": os.environ['SOL_VPN'],
     "solace.messaging.authentication.scheme.basic.user-name": os.environ['SOL_USERNAME'],
     "solace.messaging.authentication.scheme.basic.password": os.environ['SOL_PASSWORD']
     }
