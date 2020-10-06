@@ -16,8 +16,11 @@
 1. Install the API `pip install <path_to_installed_wheel>`
 
 ## Run Samples
-Execute the script of choice and pass the environment variables
+Execute the script of choice as follows:
 
+`python <name_of_file>.py`
+
+Note: to pass non default parameters, do so via the environment variables   
 `SOL_HOST=<host_name> SOL_VPN=<vpn_name> SOL_USERNAME=<username> SOL_PASSWORD=<password> python <name_of_file>.py`
 
 ## Notes:
