@@ -6,27 +6,27 @@ from pysolace.messaging.messaging_service import MessagingService
 from pysolace.messaging.utils.resources.topic_subscription import TopicSubscription
 from pysolace.messaging.receiver.message_receiver import MessageHandler
 
-# Callback function to handle received messages
+# Callback functions 
 class MessageHandlerImpl(MessageHandler):
+    # Handle received messages
     def on_message(self, message: 'InboundMessage'):
         topic = message.get_destination_name()
-        # NOTE: Check type of msg before get as string
+        properties = message.get_properties()
         payload_str = message.get_payload_as_string()
-        # NOTE: Show how to receive header values
+        payload_bytes = message.get_payload_as_bytes()
         print("\n" + f"CALLBACK: Message Received on Topic: {topic}.\n"
-                     f"Message String: {payload_str} \n")
+                     f"Message String: {payload_str} \n"
+                     f"Message Bytes: {payload_bytes} \n"
+                     f"Message Properties: {properties} \n")
 
-host = os.environ.get('SOL_HOST') or "localhost"
-vpn_name = os.environ.get('SOL_VPN') or "default"
-username = os.environ.get('SOL_USERNAME') or "default"
-password = os.environ.get('SOL_PASSWORD') or "default"
-
+    # TO-Do: Handle errors
+    
 # Broker Config
 broker_props = {
-    "solace.messaging.transport.host": host,
-    "solace.messaging.service.vpn-name": vpn_name,
-    "solace.messaging.authentication.scheme.basic.user-name": username,
-    "solace.messaging.authentication.scheme.basic.password": password
+    "solace.messaging.transport.host": os.environ.get('SOL_HOST') or "localhost",
+    "solace.messaging.service.vpn-name": os.environ.get('SOL_VPN') or "default",
+    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOL_USERNAME') or "default",
+    "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOL_PASSWORD') or "default"
     }
 
 
@@ -34,8 +34,8 @@ broker_props = {
 messaging_service = MessagingService.builder().from_properties(broker_props).build()
 messaging_service.connect_async()
 
-# Define a Topic subscription 
-topics = ["taxinyc/ops/ride/>", "taxinyc/analytics/ride/>"]
+# Define a Topic subscriptions 
+topics = ["taxinyc/ops/ride/>", "taxinyc/process/*"]
 
 try:
     # Subscribe to the topic
@@ -43,7 +43,11 @@ try:
     for t in topics:
         topics_sub.append(TopicSubscription.of(t))
         print(f"Subscribing to: {t}")
-    direct_receive_service = messaging_service.create_direct_message_receiver_builder().with_subscriptions(topics_sub).build().start()
+    direct_receive_service = messaging_service.create_direct_message_receiver_builder()\
+                            .with_subscriptions(topics_sub)\
+                            .build()\
+
+    direct_receive_service.start()
     direct_receive_service.receive_async(MessageHandlerImpl())
     try: 
         while True:
