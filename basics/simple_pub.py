@@ -1,13 +1,40 @@
+## Goal: Simple Publisher with some excpetion handling
 import os
 import time
 
 # Import Solace Python  API modules from the pysolace package
-from pysolace.messaging.messaging_service import MessagingService
+from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy
 from pysolace.messaging.utils.topic import Topic
+from pysolace.messaging.publisher.direct_message_publisher import PublishFailureListener
+from pysolace.messaging.core.solace_message import SolaceMessage
+
 
 MSG_COUNT = 5
+TOPIC_PREFIX = "samples/hello"
 
-# Broker Config
+# Inner classes for error handling
+class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
+    def on_reconnected(self, e: ServiceEvent):
+        print("\non_reconnected")
+        print(f"Error cause: {e.get_cause()}")
+        print(f"Message: {e.get_message()}")
+    
+    def on_reconnecting(self, e: "ServiceEvent"):
+        print("\non_reconnecting")
+        print(f"Error cause: {e.get_cause()}")
+        print(f"Message: {e.get_message()}")
+
+    def on_service_interrupted(self, e: "ServiceEvent"):
+        print("\non_service_interrupted")
+        print(f"Error cause: {e.get_cause()}")
+        print(f"Message: {e.get_message()}")
+
+ 
+class PublisherErrorHandling(PublishFailureListener):
+    def on_failed_publish(self, e: "FailedPublishEvent"):
+        print("on_failed_publish")
+
+# Broker Config. Note: Could pass other properties Look into
 broker_props = {
     "solace.messaging.transport.host": os.environ.get('SOL_HOST') or "localhost",
     "solace.messaging.service.vpn-name": os.environ.get('SOL_VPN') or "default",
@@ -15,13 +42,28 @@ broker_props = {
     "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOL_PASSWORD') or "default"
     }
 
-# Initialize A messaging service + Connect to the broker
-messaging_service = MessagingService.builder().from_properties(broker_props).build()
-messaging_service.connect_async()
+# Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
+# Note: The reconnections strategy could also be configured using the broker properties object
+messaging_service = MessagingService.builder().from_properties(broker_props)\
+                    .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(20,3))\
+                    .build()
 
-# Create a direct message publish service and start it
-direct_publish_service = messaging_service.create_direct_message_publisher_builder().build()
-direct_publish_service.start_async()
+messaging_service.connect()
+print(f'Messaging Service connected? {messaging_service.is_connected}')
+
+# Event Handeling for the messaging service
+service_handler = ServiceEventHandler()
+messaging_service.add_reconnection_listener(service_handler)
+messaging_service.add_reconnection_attempt_listener(service_handler)
+messaging_service.add_service_interruption_listener(service_handler)
+
+# Create a direct message publisher and start it
+direct_publisher = messaging_service.create_direct_message_publisher_builder().build()
+direct_publisher.set_publish_failure_listener(PublisherErrorHandling())
+direct_publisher.set_publisher_readiness_listener
+
+direct_publisher.start()
+print(f'Direct Publisher ready? {direct_publisher.is_ready()}')
 
 # Prepare outbound message payload and body
 message_body = "this is the body of the msg"
@@ -36,20 +78,21 @@ try:
     while True:
         while count <= MSG_COUNT:
             # Build a dynamic topic
-            topic = Topic.of("taxinyc/ops/ride/called/v1" + f'/{count}')
+            topic = Topic.of(TOPIC_PREFIX + f'/python/{count}')
             # Direct publish the message
-            direct_publish_service.publish(destination=topic, message=outbound_msg)
+            direct_publisher.publish(destination=topic, message=outbound_msg)
+            # outbound_msg.solace_message.message_set_binary_attachment_string(f'test {count}')
+            # outbound_msg.solace_message.message_set_binary_attachment_string(f'test {count}')
+
             print(f'Published message on {topic}')
             count += 1
             time.sleep(0.1)
+        print("\n")
         count = 1
         time.sleep(1)
+
 except KeyboardInterrupt:
     print('\nTerminating Direct Publish Messaging Service')
-    direct_publish_service.terminate()
+    direct_publisher.terminate()
     print('\nDisconnecting Messaging Service')
     messaging_service.disconnect()
-
-
-## Error handleing: catch and log exceptions
-## Verify if topic sub is readded on reconnect

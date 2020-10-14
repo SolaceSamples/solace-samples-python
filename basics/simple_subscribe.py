@@ -2,24 +2,34 @@ import os
 import time
 
 # Import Solace Python  API modules from the pysolace package
-from pysolace.messaging.messaging_service import MessagingService
+from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from pysolace.messaging.utils.resources.topic_subscription import TopicSubscription
 from pysolace.messaging.receiver.message_receiver import MessageHandler
+from pysolace.messaging.core.solace_message import SolaceMessage
 
-# Callback functions 
+TOPIC_PREFIX = "samples/hello"
+
+# Handle received messages
 class MessageHandlerImpl(MessageHandler):
-    # Handle received messages
     def on_message(self, message: 'InboundMessage'):
-        topic = message.get_destination_name()
-        properties = message.get_properties()
-        payload_str = message.get_payload_as_string()
-        payload_bytes = message.get_payload_as_bytes()
-        print("\n" + f"CALLBACK: Message Received on Topic: {topic}.\n"
-                     f"Message String: {payload_str} \n"
-                     f"Message Bytes: {payload_bytes} \n"
-                     f"Message Properties: {properties} \n")
+        print("\n" + f"Message dump: {message.solace_message.get_message_dump()} \n")
 
-    # TO-Do: Handle errors
+# Error Handling Class
+class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
+    def on_reconnected(self, e: ServiceEvent):
+        print("\non_reconnected")
+        print(f"Error cause: {e.get_cause()}")
+        print(f"Message: {e.get_message()}")
+    
+    def on_reconnecting(self, e: "ServiceEvent"):
+        print("\non_reconnecting")
+        print(f"Error cause: {e.get_cause()}")
+        print(f"Message: {e.get_message()}")
+
+    def on_service_interrupted(self, e: "ServiceEvent"):
+        print("\non_service_interrupted")
+        print(f"Error cause: {e.get_cause()}")
+        print(f"Message: {e.get_message()}")
     
 # Broker Config
 broker_props = {
@@ -29,26 +39,38 @@ broker_props = {
     "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOL_PASSWORD') or "default"
     }
 
+# Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
+# Note: The reconnections strategy could also be configured using the broker properties object
+messaging_service = MessagingService.builder().from_properties(broker_props)\
+                    .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(20,3))\
+                    .build()
 
-# Initialize A messaging service + Connect to the broker
-messaging_service = MessagingService.builder().from_properties(broker_props).build()
-messaging_service.connect_async()
+messaging_service.connect()
+print(f'Messaging Service connected? {messaging_service.is_connected}')
+
+# Error Handeling for the messaging service
+service_handler = ServiceEventHandler()
+messaging_service.add_reconnection_listener(service_handler)
+messaging_service.add_reconnection_attempt_listener(service_handler)
+messaging_service.add_service_interruption_listener(service_handler)
 
 # Define a Topic subscriptions 
-topics = ["taxinyc/ops/ride/>", "taxinyc/process/*"]
+topics = [TOPIC_PREFIX + "/python/>", TOPIC_PREFIX + "/python/v2/>"]
+topics_sub = []
+for t in topics:
+    topics_sub.append(TopicSubscription.of(t))
+
+# Build a Receiver Service
+direct_receiver = messaging_service.create_direct_message_receiver_builder()\
+                        .with_subscriptions(topics_sub)\
+                        .build()\
+
+direct_receiver.start()
+print(f'Direct Subscriber is running? {direct_receiver.is_running()}')
 
 try:
-    # Subscribe to the topic
-    topics_sub = []
-    for t in topics:
-        topics_sub.append(TopicSubscription.of(t))
-        print(f"Subscribing to: {t}")
-    direct_receive_service = messaging_service.create_direct_message_receiver_builder()\
-                            .with_subscriptions(topics_sub)\
-                            .build()\
-
-    direct_receive_service.start()
-    direct_receive_service.receive_async(MessageHandlerImpl())
+    print(f"Subscribing to: {topics}")
+    direct_receiver.receive_async(MessageHandlerImpl())
     try: 
         while True:
             time.sleep(1)
