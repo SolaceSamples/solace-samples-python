@@ -18,10 +18,12 @@
 ## Run Samples
 Execute the script of choice as follows:
 
-`python <name_of_file>.py`
+- `python <name_of_file>.py`
 
-Note: to pass non default parameters, do so via the environment variables   
-`SOL_HOST=<host_name> SOL_VPN=<vpn_name> SOL_USERNAME=<username> SOL_PASSWORD=<password> python <name_of_file>.py`
+Note: This assumes you have a [local docker](https://solace.com/products/event-broker/software/getting-started/) broker running on localhost
+
+To pass non default parameters, do so via the environment variables   
+- `SOL_HOST=<host_name> SOL_VPN=<vpn_name> SOL_USERNAME=<username> SOL_PASSWORD=<password> python <name_of_file>.py`
 
 ## Notes:
 1. [Python Virtual environment](https://docs.python.org/3/tutorial/venv.html) is recommended to keep your project dependencies within the project scope and avoid polluting global python packages
