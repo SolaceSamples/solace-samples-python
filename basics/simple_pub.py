@@ -1,4 +1,4 @@
-## Goal: Simple Publisher with some excpetion handling
+## Goal: Simple Publisher, event handling and message properties setting
 import os
 import time
 

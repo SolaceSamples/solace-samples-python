@@ -1,3 +1,4 @@
+## Goal: Publisher + Subscriber 
 import os
 import time
 

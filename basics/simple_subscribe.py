@@ -1,3 +1,4 @@
+## Goal: Simple Subscriber and event handling
 import os
 import time
 
