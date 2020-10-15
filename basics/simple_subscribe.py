@@ -45,6 +45,7 @@ messaging_service = MessagingService.builder().from_properties(broker_props)\
                     .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(20,3))\
                     .build()
 
+# Blocking connect thread
 messaging_service.connect()
 print(f'Messaging Service connected? {messaging_service.is_connected}')
 
@@ -70,6 +71,7 @@ print(f'Direct Subscriber is running? {direct_receiver.is_running()}')
 
 try:
     print(f"Subscribing to: {topics}")
+    # Callback for received messages
     direct_receiver.receive_async(MessageHandlerImpl())
     try: 
         while True:
@@ -77,5 +79,7 @@ try:
     except KeyboardInterrupt:
         print('\nDisconnecting Messaging Service')
 finally:
+    print('\nTerminating receiver')
+    direct_receiver.terminate()
+    print('\nDisconnecting Messaging Service')
     messaging_service.disconnect()
-    direct_receive_service.terminate()

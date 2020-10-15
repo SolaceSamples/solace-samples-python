@@ -1,18 +1,27 @@
-## Goal: Simple Publisher with some excpetion handling
 import os
 import time
 
 # Import Solace Python  API modules from the pysolace package
-from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy
-from pysolace.messaging.utils.topic import Topic
+from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from pysolace.messaging.publisher.direct_message_publisher import PublishFailureListener
+from pysolace.messaging.utils.resources.topic_subscription import TopicSubscription
+from pysolace.messaging.receiver.message_receiver import MessageHandler
 from pysolace.messaging.core.solace_message import SolaceMessage
+from pysolace.messaging.utils.topic import Topic
 
-
-MSG_COUNT = 5
 TOPIC_PREFIX = "samples/hello"
+SHUTDOWN = False
 
-# Inner classes for error handling
+# Handle received messages
+class MessageHandlerImpl(MessageHandler):
+    def on_message(self, message: 'InboundMessage'):
+        global SHUTDOWN
+        if "quit" in message.get_destination_name():
+            print("QUIT message received, shutting down.")
+            SHUTDOWN = True 
+        print("\n" + f"Message dump: {message.solace_message.get_message_dump()} \n")
+
+# Error Handling Class
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
     def on_reconnected(self, e: ServiceEvent):
         print("\non_reconnected")
@@ -29,12 +38,11 @@ class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, Ser
         print(f"Error cause: {e.get_cause()}")
         print(f"Message: {e.get_message()}")
 
- 
 class PublisherErrorHandling(PublishFailureListener):
     def on_failed_publish(self, e: "FailedPublishEvent"):
         print("on_failed_publish")
 
-# Broker Config. Note: Could pass other properties Look into
+# Broker Config
 broker_props = {
     "solace.messaging.transport.host": os.environ.get('SOL_HOST') or "localhost",
     "solace.messaging.service.vpn-name": os.environ.get('SOL_VPN') or "default",
@@ -50,9 +58,9 @@ messaging_service = MessagingService.builder().from_properties(broker_props)\
 
 # Blocking connect thread
 messaging_service.connect()
-print(f'Messaging Service connected? {messaging_service.is_connected}')
+# print(f'Messaging Service connected? {messaging_service.is_connected}')
 
-# Event Handeling for the messaging service
+# Error Handeling for the messaging service
 service_handler = ServiceEventHandler()
 messaging_service.add_reconnection_listener(service_handler)
 messaging_service.add_reconnection_attempt_listener(service_handler)
@@ -65,32 +73,48 @@ direct_publisher.set_publisher_readiness_listener
 
 # Blocking Start thread
 direct_publisher.start()
-print(f'Direct Publisher ready? {direct_publisher.is_ready()}')
+# print(f'Direct Publisher ready? {direct_publisher.is_ready()}')
 
+unique_name = ""
+while not unique_name:
+    unique_name = input("Enter your name: ").replace(" ", "")
+
+# Define a Topic subscriptions 
+topics = [TOPIC_PREFIX + "/python/>", TOPIC_PREFIX + "/control/>"]
+topics_sub = []
+for t in topics:
+    topics_sub.append(TopicSubscription.of(t))
+
+msgSeqNum = 0
 # Prepare outbound message payload and body
-message_body = "this is the body of the msg"
+message_body = f'this is the body of the msg {msgSeqNum}'
 outbound_msg = messaging_service.message_builder() \
                 .with_application_message_id("sample_id") \
                 .with_property("application", "samples") \
                 .with_property("language", "Python") \
                 .build(message_body)
-count = 1
-print("\nSend a KeyboardInterrupt to stop publishing\n")
-try: 
-    while True:
-        while count <= MSG_COUNT:
+try:
+    print(f"Subscribed to: {topics}")
+    # Build a Receiver
+    direct_receiver = messaging_service.create_direct_message_receiver_builder().with_subscriptions(topics_sub).build()
+    direct_receiver.start()
+    # Callback for received messages
+    direct_receiver.receive_async(MessageHandlerImpl())
+    if direct_receiver.is_running():
+        print("Connected and Subscribed! Ready to publish\n")
+    try:
+        while not SHUTDOWN:
             # Direct publish the message
-            direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f'/python/{count}'), message=outbound_msg)
-
-            print(f'Published message on {topic}')
-            count += 1
+            direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f"/python/{unique_name}/{msgSeqNum}"), message=outbound_msg)
+            msgSeqNum += 1
+            outbound_msg.solace_message.message_set_binary_attachment_string(f'this is the body of the msg_{msgSeqNum}')
+            outbound_msg.solace_message.set_message_application_message_id(f'sample_id {msgSeqNum}')
             time.sleep(0.1)
-        print("\n")
-        count = 1
-        time.sleep(1)
-
-except KeyboardInterrupt:
-    print('\nTerminating Publisher')
+    except KeyboardInterrupt:
+        print('\nDisconnecting Messaging Service')
+finally:
+    print('Terminating Publisher and Receiver')
     direct_publisher.terminate()
-    print('\nDisconnecting Messaging Service')
+    direct_receiver.terminate()
+    print('Disconnecting Messaging Service')
     messaging_service.disconnect()
