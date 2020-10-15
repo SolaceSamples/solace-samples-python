@@ -3,6 +3,7 @@ import time
 
 # Import Solace Python  API modules from the pysolace package
 from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
+from pysolace.messaging.exceptions.pubsubplus_client_exception import PubSubPlusClientException
 from pysolace.messaging.publisher.direct_message_publisher import PublishFailureListener
 from pysolace.messaging.utils.resources.topic_subscription import TopicSubscription
 from pysolace.messaging.receiver.message_receiver import MessageHandler
@@ -87,7 +88,7 @@ for t in topics:
 
 msgSeqNum = 0
 # Prepare outbound message payload and body
-message_body = f'this is the body of the msg {msgSeqNum}'
+message_body = f'Hello from Python Hellow World Sample!'
 outbound_msg = messaging_service.message_builder() \
                 .with_application_message_id("sample_id") \
                 .with_property("application", "samples") \
@@ -108,11 +109,13 @@ try:
             direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f"/python/{unique_name}/{msgSeqNum}"), message=outbound_msg)
             msgSeqNum += 1
             # Modifying the outbond message instead of creating a new one
-            outbound_msg.solace_message.message_set_binary_attachment_string(f'this is the body of the msg_{msgSeqNum}')
+            outbound_msg.solace_message.message_set_binary_attachment_string(f'{message_body} --> {msgSeqNum}')
             outbound_msg.solace_message.set_message_application_message_id(f'sample_id {msgSeqNum}')
             time.sleep(0.1)
     except KeyboardInterrupt:
         print('\nDisconnecting Messaging Service')
+    except PubSubPlusClientException as exception:
+        print(f'Received a PubSubPlusClientException: {exception}')
 finally:
     print('Terminating Publisher and Receiver')
     direct_publisher.terminate()
