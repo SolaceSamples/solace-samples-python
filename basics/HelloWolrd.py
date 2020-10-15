@@ -21,7 +21,7 @@ class MessageHandlerImpl(MessageHandler):
             SHUTDOWN = True 
         print("\n" + f"Message dump: {message.solace_message.get_message_dump()} \n")
 
-# Error Handling Class
+# Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
     def on_reconnected(self, e: ServiceEvent):
         print("\non_reconnected")
@@ -107,6 +107,7 @@ try:
             # Direct publish the message
             direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f"/python/{unique_name}/{msgSeqNum}"), message=outbound_msg)
             msgSeqNum += 1
+            # Modifying the outbond message instead of creating a new one
             outbound_msg.solace_message.message_set_binary_attachment_string(f'this is the body of the msg_{msgSeqNum}')
             outbound_msg.solace_message.set_message_application_message_id(f'sample_id {msgSeqNum}')
             time.sleep(0.1)

@@ -14,7 +14,7 @@ class MessageHandlerImpl(MessageHandler):
     def on_message(self, message: 'InboundMessage'):
         print("\n" + f"Message dump: {message.solace_message.get_message_dump()} \n")
 
-# Error Handling Class
+# Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
     def on_reconnected(self, e: ServiceEvent):
         print("\non_reconnected")
