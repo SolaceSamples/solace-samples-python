@@ -13,6 +13,7 @@ TOPIC_PREFIX = "samples/hello"
 # Handle received messages
 class MessageHandlerImpl(MessageHandler):
     def on_message(self, message: 'InboundMessage'):
+        # TODO remove any reference to SolaceMessage and just print the message (str function). Once implemented
         print("\n" + f"Message dump: {message.solace_message.get_message_dump()} \n")
 
 # Inner classes for error handling
@@ -34,10 +35,10 @@ class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, Ser
     
 # Broker Config
 broker_props = {
-    "solace.messaging.transport.host": os.environ.get('SOL_HOST') or "localhost",
-    "solace.messaging.service.vpn-name": os.environ.get('SOL_VPN') or "default",
-    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOL_USERNAME') or "default",
-    "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOL_PASSWORD') or "default"
+    "solace.messaging.transport.host": os.environ.get('SOLACE_HOST') or "localhost",
+    "solace.messaging.service.vpn-name": os.environ.get('SOLACE_VPN') or "default",
+    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOLACE_USERNAME') or "default",
+    "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or "default"
     }
 
 # Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
@@ -62,10 +63,10 @@ topics_sub = []
 for t in topics:
     topics_sub.append(TopicSubscription.of(t))
 
-# Build a Receiver Service
+# Build a Receiver with the given topics and start it
 direct_receiver = messaging_service.create_direct_message_receiver_builder()\
                         .with_subscriptions(topics_sub)\
-                        .build()\
+                        .build()
 
 direct_receiver.start()
 print(f'Direct Subscriber is running? {direct_receiver.is_running()}')

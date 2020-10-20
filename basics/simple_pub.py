@@ -3,7 +3,7 @@ import os
 import time
 
 # Import Solace Python  API modules from the pysolace package
-from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy
+from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from pysolace.messaging.utils.topic import Topic
 from pysolace.messaging.publisher.direct_message_publisher import PublishFailureListener
 from pysolace.messaging.core.solace_message import SolaceMessage
@@ -36,10 +36,10 @@ class PublisherErrorHandling(PublishFailureListener):
 
 # Broker Config. Note: Could pass other properties Look into
 broker_props = {
-    "solace.messaging.transport.host": os.environ.get('SOL_HOST') or "localhost",
-    "solace.messaging.service.vpn-name": os.environ.get('SOL_VPN') or "default",
-    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOL_USERNAME') or "default",
-    "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOL_PASSWORD') or "default"
+    "solace.messaging.transport.host": os.environ.get('SOLACE_HOST') or "localhost",
+    "solace.messaging.service.vpn-name": os.environ.get('SOLACE_VPN') or "default",
+    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOLACE_USERNAME') or "default",
+    "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or "default"
     }
 
 # Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
@@ -61,7 +61,6 @@ messaging_service.add_service_interruption_listener(service_handler)
 # Create a direct message publisher and start it
 direct_publisher = messaging_service.create_direct_message_publisher_builder().build()
 direct_publisher.set_publish_failure_listener(PublisherErrorHandling())
-direct_publisher.set_publisher_readiness_listener
 
 # Blocking Start thread
 direct_publisher.start()
@@ -69,18 +68,22 @@ print(f'Direct Publisher ready? {direct_publisher.is_ready()}')
 
 # Prepare outbound message payload and body
 message_body = "this is the body of the msg"
-outbound_msg = messaging_service.message_builder() \
+outbound_msg_builder = messaging_service.message_builder() \
                 .with_application_message_id("sample_id") \
                 .with_property("application", "samples") \
                 .with_property("language", "Python") \
-                .build(message_body)
+
 count = 1
 print("\nSend a KeyboardInterrupt to stop publishing\n")
 try: 
     while True:
         while count <= MSG_COUNT:
-            # Direct publish the message
-            direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f'/python/{count}'), message=outbound_msg)
+            topic = Topic.of(TOPIC_PREFIX + f'/python/{count}')
+            # Direct publish the message with dynamic headers and payload
+            outbound_msg = outbound_msg_builder \
+                            .with_application_message_id(f'NEW {count}')\
+                            .build(f'{message_body} + {count}')
+            direct_publisher.publish(destination=topic, message=outbound_msg)
 
             print(f'Published message on {topic}')
             count += 1

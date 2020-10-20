@@ -46,10 +46,10 @@ class PublisherErrorHandling(PublishFailureListener):
 
 # Broker Config
 broker_props = {
-    "solace.messaging.transport.host": os.environ.get('SOL_HOST') or "localhost",
-    "solace.messaging.service.vpn-name": os.environ.get('SOL_VPN') or "default",
-    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOL_USERNAME') or "default",
-    "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOL_PASSWORD') or "default"
+    "solace.messaging.transport.host": os.environ.get('SOLACE_HOST') or "localhost",
+    "solace.messaging.service.vpn-name": os.environ.get('SOLACE_VPN') or "default",
+    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOLACE_USERNAME') or "default",
+    "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or "default"
     }
 
 # Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
