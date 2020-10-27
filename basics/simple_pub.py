@@ -1,5 +1,6 @@
 ## Goal: Simple Publisher, event handling and message properties setting
 import os
+import platform
 import time
 
 # Import Solace Python  API modules from the pysolace package
@@ -8,6 +9,7 @@ from pysolace.messaging.utils.topic import Topic
 from pysolace.messaging.publisher.direct_message_publisher import PublishFailureListener
 from pysolace.messaging.core.solace_message import SolaceMessage
 
+if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
 MSG_COUNT = 5
 TOPIC_PREFIX = "samples/hello"

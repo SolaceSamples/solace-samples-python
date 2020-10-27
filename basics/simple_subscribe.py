@@ -1,5 +1,6 @@
 ## Goal: Simple Subscriber and event handling
 import os
+import platform
 import time
 
 # Import Solace Python  API modules from the pysolace package
@@ -7,6 +8,8 @@ from pysolace.messaging.messaging_service import MessagingService, ReconnectionL
 from pysolace.messaging.utils.resources.topic_subscription import TopicSubscription
 from pysolace.messaging.receiver.message_receiver import MessageHandler
 from pysolace.messaging.core.solace_message import SolaceMessage
+
+if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
 TOPIC_PREFIX = "samples/hello"
 
