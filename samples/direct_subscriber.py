@@ -6,7 +6,7 @@ import time
 # Import Solace Python  API modules from the solace package
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from solace.messaging.resources.topic_subscription import TopicSubscription
-from solace.messaging.receiver.message_receiver import MessageHandler
+from solace.messaging.receiver.message_receiver import MessageHandler, InboundMessage
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
@@ -14,8 +14,12 @@ TOPIC_PREFIX = "samples/hello"
 
 # Handle received messages
 class MessageHandlerImpl(MessageHandler):
-    def on_message(self, message: "InboundMessage"):
-        print("\n" + f"Message dump: {str(message)} \n")
+    def on_message(self, message: InboundMessage):
+        topic = message.get_destination_name()
+        payload_str = message.get_payload_as_string
+        print("\n" + f"Message Payload String: {payload_str} \n")
+        print("\n" + f"Message Topic: {topic} \n")
+        print("\n" + f"Message dump: {message} \n")
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
