@@ -3,11 +3,10 @@ import os
 import platform
 import time
 
-# Import Solace Python  API modules from the pysolace package
-from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
-from pysolace.messaging.utils.topic import Topic
-from pysolace.messaging.publisher.direct_message_publisher import PublishFailureListener
-from pysolace.messaging.core.solace_message import SolaceMessage
+# Import Solace Python  API modules from the solace package
+from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
+from solace.messaging.resources.topic import Topic
+from solace.messaging.publisher.direct_message_publisher import PublishFailureListener
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
@@ -40,7 +39,7 @@ class PublisherErrorHandling(PublishFailureListener):
 broker_props = {
     "solace.messaging.transport.host": os.environ.get('SOLACE_HOST') or "localhost",
     "solace.messaging.service.vpn-name": os.environ.get('SOLACE_VPN') or "default",
-    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOLACE_USERNAME') or "default",
+    "solace.messaging.authentication.scheme.basic.username": os.environ.get('SOLACE_USERNAME') or "default",
     "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or "default"
     }
 

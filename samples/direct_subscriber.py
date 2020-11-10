@@ -3,11 +3,10 @@ import os
 import platform
 import time
 
-# Import Solace Python  API modules from the pysolace package
-from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
-from pysolace.messaging.utils.resources.topic_subscription import TopicSubscription
-from pysolace.messaging.receiver.message_receiver import MessageHandler
-from pysolace.messaging.core.solace_message import SolaceMessage
+# Import Solace Python  API modules from the solace package
+from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
+from solace.messaging.resources.topic_subscription import TopicSubscription
+from solace.messaging.receiver.message_receiver import MessageHandler
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
@@ -15,9 +14,8 @@ TOPIC_PREFIX = "samples/hello"
 
 # Handle received messages
 class MessageHandlerImpl(MessageHandler):
-    def on_message(self, message: 'InboundMessage'):
-        # TODO remove any reference to SolaceMessage and just print the message (str function). Once implemented
-        print("\n" + f"Message dump: {message.solace_message.get_message_dump()} \n")
+    def on_message(self, message: "InboundMessage"):
+        print("\n" + f"Message dump: {str(message)} \n")
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
@@ -40,7 +38,7 @@ class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, Ser
 broker_props = {
     "solace.messaging.transport.host": os.environ.get('SOLACE_HOST') or "localhost",
     "solace.messaging.service.vpn-name": os.environ.get('SOLACE_VPN') or "default",
-    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOLACE_USERNAME') or "default",
+    "solace.messaging.authentication.scheme.basic.username": os.environ.get('SOLACE_USERNAME') or "default",
     "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or "default"
     }
 

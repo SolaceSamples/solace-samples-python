@@ -12,8 +12,7 @@
     1.2 Windows: `source venv/Scripts/activate`     
 
 ## Install the Solace Python API
-1. Install the wheel package from the [Solace Community](https://solace.community/discussion/336/python-whos-in-for-a-real-treat)
-1. Install the API `pip install <path_to_installed_wheel>`
+1. Install the API `pip install solace-pubsubplus`
 
 ## Run Samples
 Execute the script of choice as follows:
