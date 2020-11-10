@@ -31,7 +31,7 @@ To pass non default parameters, do so via the environment variables
 ## To-Do
 - [x] Add loop for publisher message rate
 - [ ] Add License, Authors, Contributing
-- [ ] Add `pip install pysolace` when API is released
+- [ ] Add `pip install solace-pubsubplus` when API is released
 
 ## Resources
 - Solace Developer Portal is at [solace.dev](https://solace.dev)
