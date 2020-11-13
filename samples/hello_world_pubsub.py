@@ -3,13 +3,13 @@ import os
 import time
 
 # Import Solace Python  API modules from the pysolace package
-from pysolace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
-from pysolace.messaging.exceptions.pubsubplus_client_exception import PubSubPlusClientException
-from pysolace.messaging.publisher.direct_message_publisher import PublishFailureListener
-from pysolace.messaging.utils.resources.topic_subscription import TopicSubscription
-from pysolace.messaging.receiver.message_receiver import MessageHandler
-from pysolace.messaging.core.solace_message import SolaceMessage
-from pysolace.messaging.utils.topic import Topic
+from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
+from solace.messaging.errors.pubsubplus_client_error import PubSubPlusClientError
+from solace.messaging.publisher.direct_message_publisher import PublishFailureListener
+from solace.messaging.resources.topic_subscription import TopicSubscription
+from solace.messaging.receiver.message_receiver import MessageHandler
+# from solace.messaging.core.solace_message import SolaceMessage
+from solace.messaging.resources.topic import Topic
 
 TOPIC_PREFIX = "samples/hello"
 SHUTDOWN = False
@@ -48,9 +48,10 @@ class PublisherErrorHandling(PublishFailureListener):
 broker_props = {
     "solace.messaging.transport.host": os.environ.get('SOLACE_HOST') or "localhost",
     "solace.messaging.service.vpn-name": os.environ.get('SOLACE_VPN') or "default",
-    "solace.messaging.authentication.scheme.basic.user-name": os.environ.get('SOLACE_USERNAME') or "default",
+    "solace.messaging.authentication.scheme.basic.username": os.environ.get('SOLACE_USERNAME') or "default",
     "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or "default"
     }
+print(os.environ.get('SOLACE_HOST'));
 
 # Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
 # Note: The reconnections strategy could also be configured using the broker properties object
@@ -115,7 +116,7 @@ try:
             time.sleep(0.1)
     except KeyboardInterrupt:
         print('\nDisconnecting Messaging Service')
-    except PubSubPlusClientException as exception:
+    except PubSubPlusClientError as exception:
         print(f'Received a PubSubPlusClientException: {exception}')
 finally:
     print('Terminating Publisher and Receiver')
