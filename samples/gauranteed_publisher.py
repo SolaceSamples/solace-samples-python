@@ -1,3 +1,4 @@
+# Gauranteed Publisher publishing persistent messages
 import os
 import platform
 import time

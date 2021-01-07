@@ -1,3 +1,8 @@
+# Consumer that binds to exclusive durable queue
+# Assumes existence of queue on broker holding messages.
+# Note: create queue with topic subscription 
+# See https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Adding-Topic-Subscriptio.htm for more details
+
 import os
 import platform
 import time
@@ -58,7 +63,6 @@ messaging_service.add_service_interruption_listener(service_handler)
 
 # Queue name. 
 # NOTE: This assumes that a persistent queue already exists on the broker with the right topic subscription 
-# See https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Adding-Topic-Subscriptio.htm for more details
 queue_name = "sample-queue"
 durable_exclusive_queue = Queue.durable_exclusive_queue(queue_name)
 
