@@ -4,15 +4,16 @@ import time
 import threading
 
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
-from solace.messaging.publisher.persistent_message_publisher import PersistentMessagePublisher
-from solace.messaging.publisher.persistent_message_publisher import MessageDeliveryListener
-from solace.messaging.resources.topic import Topic
+from solace.messaging.resources.queue import Queue
+from solace.messaging.receiver.persistent_message_receiver import PersistentMessageReceiver
+from solace.messaging.receiver.message_receiver import MessageHandler, InboundMessage
+from solace.messaging.errors.pubsubplus_client_error import PubSubPlusClientError
 
-if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
-
-lock = threading.Lock() # lock object that is not owned by any thread. Used for synchronization and counting the 
-
-TOPIC_PREFIX = "samples/hello"
+# Handle received messages
+class MessageHandlerImpl(MessageHandler):
+    def on_message(self, message: InboundMessage):
+        topic = message.get_destination_name()
+        print("\n" + f"Message dump: {message} \n")
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
@@ -30,19 +31,6 @@ class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, Ser
         print("\non_service_interrupted")
         print(f"Error cause: {e.get_cause()}")
         print(f"Message: {e.get_message()}")
-
-class MessageDeliveryListenerImpl(MessageDeliveryListener):
-    def __init__(self):
-        self._delivery_count = 0
-
-    @property
-    def get_delivery_count(self):
-        return self._delivery_count
-
-    def on_delivery_receipt(self, delivery_receipt: 'DeliveryReceipt'):
-        with lock:
-            self._delivery_count += 1
-            print(f"\ndelivery_receipt:\n {delivery_receipt}\n")
 
 # Broker Config. Note: Could pass other properties Look into
 broker_props = {
@@ -68,38 +56,35 @@ messaging_service.add_reconnection_listener(service_handler)
 messaging_service.add_reconnection_attempt_listener(service_handler)
 messaging_service.add_service_interruption_listener(service_handler)
 
-# Create a persistent message publisher and start it
-publisher: PersistentMessagePublisher = messaging_service.create_persistent_message_publisher_builder().build()
-publisher.start_async()
+# Queue name. 
+# NOTE: This assumes that a persistent queue already exists on the broker with the right topic subscription 
+# See https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Adding-Topic-Subscriptio.htm for more details
+queue_name = "sample-queue"
+durable_exclusive_queue = Queue.durable_exclusive_queue(queue_name)
 
-# set a message delivery listener to the publisher
-delivery_listener = MessageDeliveryListenerImpl()
-publisher.set_message_delivery_listener(delivery_listener)
-
-# Prepare the destination topic
-topic = Topic.of(TOPIC_PREFIX)
-
-# Prepare outbound message payload and body
-message_body = "this is the body of the msg"
-outbound_msg_builder = messaging_service.message_builder() \
-                .with_application_message_id("sample_id") \
-                .with_property("application", "samples") \
-                .with_property("language", "Python")
-count = 0 
 try:
-    while True:
-        outbound_msg = outbound_msg_builder \
-                    .with_application_message_id(f'NEW {count}')\
-                    .build(f'{message_body} + {count}')
+  # Build a receiver and bind it to the durable exclusive queue
+  persistent_receiver: PersistentMessageReceiver = messaging_service.create_persistent_message_receiver_builder()\
+            .with_message_auto_acknowledgement()\
+            .build(durable_exclusive_queue)
+  persistent_receiver.start()
 
-        publisher.publish(outbound_msg, topic)
-        print(f'PERSISTENT publish message {count} is successful... Topic: [{topic.get_name()}]')
-        count +=1
-        time.sleep(0.1)
+  # Callback for received messages
+  persistent_receiver.receive_async(MessageHandlerImpl())
+  print(f'PERSISTENT receiver started... Bound to Queue [{durable_exclusive_queue.get_name()}]')
+  try: 
+      while True:
+          time.sleep(1)
+  except KeyboardInterrupt:
+      print('\KeyboardInterrupt received')
+# Handle API exception 
+except PubSubPlusClientError as exception:
+  print(f'\nMake sure queue {queue_name} exists on broker!')
 
-except KeyboardInterrupt:
-    print(f'\nDelivery receipt count: {delivery_listener.get_delivery_count}\n')
-    print('\nTerminating Publisher')
-    publisher.terminate()
+finally:
+    if persistent_receiver.is_running():
+      print('\nTerminating receiver')
+      persistent_receiver.terminate_now()
     print('\nDisconnecting Messaging Service')
     messaging_service.disconnect()
+
