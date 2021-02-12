@@ -16,7 +16,7 @@ TOPIC_PREFIX = "samples/hello"
 class MessageHandlerImpl(MessageHandler):
     def on_message(self, message: InboundMessage):
         topic = message.get_destination_name()
-        payload_str = message.get_payload_as_string
+        payload_str = message.get_payload_as_string()
         print("\n" + f"Message Payload String: {payload_str} \n")
         print("\n" + f"Message Topic: {topic} \n")
         print("\n" + f"Message dump: {message} \n")
