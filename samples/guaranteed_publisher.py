@@ -6,7 +6,7 @@ import threading
 
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from solace.messaging.publisher.persistent_message_publisher import PersistentMessagePublisher
-from solace.messaging.publisher.persistent_message_publisher import MessageDeliveryListener
+from solace.messaging.publisher.persistent_message_publisher import MessagePublishReceiptListener
 from solace.messaging.resources.topic import Topic
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
@@ -32,18 +32,18 @@ class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, Ser
         print(f"Error cause: {e.get_cause()}")
         print(f"Message: {e.get_message()}")
 
-class MessageDeliveryListenerImpl(MessageDeliveryListener):
+class MessageReceiptListener(MessagePublishReceiptListener):
     def __init__(self):
-        self._delivery_count = 0
+        self._receipt_count = 0
 
     @property
-    def get_delivery_count(self):
-        return self._delivery_count
+    def receipt_count(self):
+        return self._receipt_count
 
-    def on_delivery_receipt(self, delivery_receipt: 'DeliveryReceipt'):
+    def on_publish_receipt(self, publish_receipt: 'PublishReceipt'):
         with lock:
-            self._delivery_count += 1
-            print(f"\ndelivery_receipt:\n {delivery_receipt}\n")
+            self._receipt_count += 1
+            print(f"\npublish_receipt:\n {self.receipt_count}\n")
 
 # Broker Config. Note: Could pass other properties Look into
 broker_props = {
@@ -74,8 +74,8 @@ publisher: PersistentMessagePublisher = messaging_service.create_persistent_mess
 publisher.start_async()
 
 # set a message delivery listener to the publisher
-delivery_listener = MessageDeliveryListenerImpl()
-publisher.set_message_delivery_listener(delivery_listener)
+receipt_listener = MessageReceiptListener()
+publisher.set_message_publish_receipt_listener(receipt_listener)
 
 # Prepare the destination topic
 topic = Topic.of(TOPIC_PREFIX)
@@ -99,7 +99,7 @@ try:
         time.sleep(0.1)
 
 except KeyboardInterrupt:
-    print(f'\nDelivery receipt count: {delivery_listener.get_delivery_count}\n')
+    print(f'\nDelivery receipt count: {receipt_listener.receipt_count}\n')
     print('\nTerminating Publisher')
     publisher.terminate()
     print('\nDisconnecting Messaging Service')

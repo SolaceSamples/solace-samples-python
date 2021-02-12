@@ -88,7 +88,7 @@ except PubSubPlusClientError as exception:
 finally:
     if persistent_receiver.is_running():
       print('\nTerminating receiver')
-      persistent_receiver.terminate_now()
+      persistent_receiver.terminate(grace_period = 0)
     print('\nDisconnecting Messaging Service')
     messaging_service.disconnect()
 
