@@ -1,1 +1,3 @@
 solace-pubsubplus==1.0.0
+requests
+urllib3

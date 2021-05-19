@@ -12,8 +12,8 @@
     1.2 Windows: `source venv/Scripts/activate`     
 1. After activating the virtual environment, make sure you have the latest pip installed `pip install --upgrade pip`
 
-## Install the Solace Python API
-1. Install the API `pip install solace-pubsubplus`
+## Install the Solace Python API and other dependencies
+1. Install the API `pip install -r requirements.txt`
 
 ## Run Samples
 Execute the script of choice as follows:
@@ -34,6 +34,3 @@ To pass non default parameters, do so via the environment variables
 - Solace Developer Portal is at [solace.dev](https://solace.dev)
 - Ask the [Solace Community](https://solace.community/categories/python-api) for further discussions and questions.
 - Official python documentation on [https://docs.solace.com/Solace-PubSub-Messaging-APIs/Python-API/python-home.htm](https://docs.solace.com/Solace-PubSub-Messaging-APIs/Python-API/python-home.htm)
-
-## To-Do
-- [ ] Add License, Authors, Contributing
