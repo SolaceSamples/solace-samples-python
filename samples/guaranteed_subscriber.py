@@ -51,7 +51,7 @@ broker_props = {
 # Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
 # Note: The reconnections strategy could also be configured using the broker properties object
 messaging_service = MessagingService.builder().from_properties(broker_props)\
-                    .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(20,3))\
+                    .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(20,3000))\
                     .build()
 
 # Blocking connect thread
