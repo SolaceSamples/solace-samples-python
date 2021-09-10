@@ -90,11 +90,7 @@ for t in topics:
 msgSeqNum = 0
 # Prepare outbound message payload and body
 message_body = f'Hello from Python Hellow World Sample!'
-outbound_msg = messaging_service.message_builder() \
-                .with_application_message_id("sample_id") \
-                .with_property("application", "samples") \
-                .with_property("language", "Python") \
-                .build(message_body)
+
 try:
     print(f"Subscribed to: {topics}")
     # Build a Receiver
@@ -106,12 +102,18 @@ try:
         print("Connected and Subscribed! Ready to publish\n")
     try:
         while not SHUTDOWN:
+            # Creating a dynamic outbond message 
+            outbound_msg = messaging_service.message_builder() \
+                .with_application_message_id(f'sample_id {msgSeqNum}') \
+                .with_property("application", "samples") \
+                .with_property("language", "Python") \
+                .build(f'{message_body} --> {msgSeqNum}')
             # Direct publish the message
             direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f"/python/{unique_name}/{msgSeqNum}"), message=outbound_msg)
             msgSeqNum += 1
             # Modifying the outbond message instead of creating a new one
-            outbound_msg.solace_message.message_set_binary_attachment_string(f'{message_body} --> {msgSeqNum}')
-            outbound_msg.solace_message.set_message_application_message_id(f'sample_id {msgSeqNum}')
+            # outbound_msg.solace_message.message_set_binary_attachment_string(f'{message_body} --> {msgSeqNum}')
+            # outbound_msg.solace_message.set_message_application_message_id(f'sample_id {msgSeqNum}')
             time.sleep(0.1)
     except KeyboardInterrupt:
         print('\nDisconnecting Messaging Service')
