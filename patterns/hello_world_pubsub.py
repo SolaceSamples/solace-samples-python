@@ -109,8 +109,9 @@ try:
         while not SHUTDOWN:
             msgSeqNum += 1
             # Check https://docs.solace.com/API-Developer-Online-Ref-Documentation/python/source/rst/solace.messaging.config.solace_properties.html for additional message properties
+            # Note: additional properties override what is set by the message_builder
             additional_properties = {APPLICATION_MESSAGE_ID: f'sample_id {msgSeqNum}'}
-            # Creating a dynamic outbond message 
+            # Creating a dynamic outbound message 
             outbound_message = message_builder.build(f'{message_body} --> {msgSeqNum}', additional_message_properties=additional_properties)
             # Direct publish the message
             direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f"/python/{unique_name}/{msgSeqNum}"), message=outbound_message)
