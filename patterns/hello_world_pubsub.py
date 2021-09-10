@@ -8,6 +8,7 @@ from solace.messaging.errors.pubsubplus_client_error import PubSubPlusClientErro
 from solace.messaging.publisher.direct_message_publisher import PublishFailureListener
 from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.receiver.message_receiver import MessageHandler
+from solace.messaging.config.solace_properties.message_properties import APPLICATION_MESSAGE_ID
 # from solace.messaging.core.solace_message import SolaceMessage
 from solace.messaging.resources.topic import Topic
 
@@ -90,6 +91,10 @@ for t in topics:
 msgSeqNum = 0
 # Prepare outbound message payload and body
 message_body = f'Hello from Python Hellow World Sample!'
+message_builder = messaging_service.message_builder() \
+                .with_application_message_id("sample_id") \
+                .with_property("application", "samples") \
+                .with_property("language", "Python") \
 
 try:
     print(f"Subscribed to: {topics}")
@@ -102,16 +107,15 @@ try:
         print("Connected and Subscribed! Ready to publish\n")
     try:
         while not SHUTDOWN:
-            # Creating a dynamic outbond message 
-            outbound_msg = messaging_service.message_builder() \
-                .with_application_message_id(f'sample_id {msgSeqNum}') \
-                .with_property("application", "samples") \
-                .with_property("language", "Python") \
-                .build(f'{message_body} --> {msgSeqNum}')
-            # Direct publish the message
-            direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f"/python/{unique_name}/{msgSeqNum}"), message=outbound_msg)
             msgSeqNum += 1
-            time.sleep(0.1)
+            # Check https://docs.solace.com/API-Developer-Online-Ref-Documentation/python/source/rst/solace.messaging.config.solace_properties.html for additional message properties
+            additional_properties = {APPLICATION_MESSAGE_ID: f'sample_id {msgSeqNum}'}
+            # Creating a dynamic outbond message 
+            outbound_message = message_builder.build(f'{message_body} --> {msgSeqNum}', additional_message_properties=additional_properties)
+            # Direct publish the message
+            direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f"/python/{unique_name}/{msgSeqNum}"), message=outbound_message)
+            # sleep are not necessary when dealing with the default back pressure elastic
+            # time.sleep(0.1)
     except KeyboardInterrupt:
         print('\nDisconnecting Messaging Service')
     except PubSubPlusClientError as exception:
