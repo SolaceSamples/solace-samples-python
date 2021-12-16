@@ -13,7 +13,7 @@ if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # 
 
 lock = threading.Lock() # lock object that is not owned by any thread. Used for synchronization and counting the 
 
-TOPIC_PREFIX = "samples/hello"
+TOPIC_PREFIX = "solace/samples/python"
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
@@ -78,7 +78,7 @@ receipt_listener = MessageReceiptListener()
 publisher.set_message_publish_receipt_listener(receipt_listener)
 
 # Prepare the destination topic
-topic = Topic.of(TOPIC_PREFIX)
+topic = Topic.of(TOPIC_PREFIX + f'/persistent/pub')
 
 # Prepare outbound message payload and body
 message_body = "this is the body of the msg"

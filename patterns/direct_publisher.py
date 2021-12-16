@@ -11,7 +11,7 @@ from solace.messaging.publisher.direct_message_publisher import PublishFailureLi
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
 MSG_COUNT = 5
-TOPIC_PREFIX = "samples/hello"
+TOPIC_PREFIX = "solace/samples/python"
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
@@ -79,7 +79,7 @@ print("\nSend a KeyboardInterrupt to stop publishing\n")
 try: 
     while True:
         while count <= MSG_COUNT:
-            topic = Topic.of(TOPIC_PREFIX + f'/python/{count}')
+            topic = Topic.of(TOPIC_PREFIX + f'/direct/pub/{count}')
             # Direct publish the message with dynamic headers and payload
             outbound_msg = outbound_msg_builder \
                             .with_application_message_id(f'NEW {count}')\

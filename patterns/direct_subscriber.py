@@ -10,7 +10,7 @@ from solace.messaging.receiver.message_receiver import MessageHandler, InboundMe
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
-TOPIC_PREFIX = "samples/hello"
+TOPIC_PREFIX = "solace/samples/python"
 
 # Handle received messages
 class MessageHandlerImpl(MessageHandler):
@@ -63,7 +63,7 @@ messaging_service.add_reconnection_attempt_listener(service_handler)
 messaging_service.add_service_interruption_listener(service_handler)
 
 # Define a Topic subscriptions 
-topics = [TOPIC_PREFIX + "/python/>", TOPIC_PREFIX + "/python/v2/>"]
+topics = [TOPIC_PREFIX + "/dir/sub/>", TOPIC_PREFIX + "/dir/sub/v2/>", "solace/samples/>"]
 topics_sub = []
 for t in topics:
     topics_sub.append(TopicSubscription.of(t))
