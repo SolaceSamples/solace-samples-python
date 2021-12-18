@@ -90,7 +90,7 @@ for t in topics:
 
 msgSeqNum = 0
 # Prepare outbound message payload and body
-message_body = f'Hello from Python Hellow World Sample!'
+message_body = f'Hello from Python Hello World Sample!'
 message_builder = messaging_service.message_builder() \
                 .with_application_message_id("sample_id") \
                 .with_property("application", "samples") \
