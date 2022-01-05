@@ -40,7 +40,7 @@ class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, Ser
     
 # Broker Config
 broker_props = {
-    "solace.messaging.transport.host": os.environ.get('SOLACE_HOST') or "localhost",
+    "solace.messaging.transport.host": os.environ.get('SOLACE_HOST') or "tcp://localhost:55555,tcp://localhost:55554",
     "solace.messaging.service.vpn-name": os.environ.get('SOLACE_VPN') or "default",
     "solace.messaging.authentication.scheme.basic.username": os.environ.get('SOLACE_USERNAME') or "default",
     "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or "default"
