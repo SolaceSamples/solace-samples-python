@@ -12,7 +12,7 @@ from solace.messaging.config.solace_properties.message_properties import APPLICA
 # from solace.messaging.core.solace_message import SolaceMessage
 from solace.messaging.resources.topic import Topic
 
-TOPIC_PREFIX = "solace/samples/python"
+TOPIC_PREFIX = "solace/samples"
 SHUTDOWN = False
 
 # Handle received messages
@@ -83,7 +83,7 @@ while not unique_name:
     unique_name = input("Enter your name: ").replace(" ", "")
 
 # Define a Topic subscriptions 
-topics = [TOPIC_PREFIX + "/>", TOPIC_PREFIX + "/control/>"]
+topics = [TOPIC_PREFIX + "/*/hello/>"]
 topics_sub = []
 for t in topics:
     topics_sub.append(TopicSubscription.of(t))
@@ -114,7 +114,7 @@ try:
             # Creating a dynamic outbound message 
             outbound_message = message_builder.build(f'{message_body} --> {msgSeqNum}', additional_message_properties=additional_properties)
             # Direct publish the message
-            direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f"/hello/{unique_name}/{msgSeqNum}"), message=outbound_message)
+            direct_publisher.publish(destination=Topic.of(TOPIC_PREFIX + f"/python/hello/{unique_name}/{msgSeqNum}"), message=outbound_message)
             # sleep are not necessary when dealing with the default back pressure elastic
             time.sleep(5)
     except KeyboardInterrupt:
