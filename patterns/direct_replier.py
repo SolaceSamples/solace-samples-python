@@ -3,26 +3,48 @@
 import os
 import platform
 import time
+import calendar;
 
 # Import Solace Python  API modules from the solace package
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, \
             ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from solace.messaging.resources.topic import Topic
 from solace.messaging.resources.topic_subscription import TopicSubscription
-from solace.messaging.publisher.direct_message_publisher import PublishFailureListener, FailedPublishEvent
-from solace.messaging.publisher.request_reply_message_publisher import RequestReplyMessagePublisher
+from solace.messaging.receiver.request_reply_message_receiver import RequestMessageHandler, InboundMessage, Replier
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
-# The idea is to get the direct_requestor and direct_replier to work together asynchronously, 
-# routing the replies to a specific topic that is consumed by direct_reply_receiver.
-#   direct_requestor: publishes('solace/samples/python/direct/request/1')
-#   direct_replier: subscribes('solace/samples/python/direct/request/1'), and replies('solace/samples/python/direct/reply/1')
+# Goal is to demonstrate request-reply pattern using Direct messages. A request message carrying {name} is published,
+# and a response with a "Greetings {name}" is expected as response.
+#   direct_requestor: publishes('solace/samples/python/direct/hello/{name}, and waits for response (either synchronously or asynchronously)
+#   direct_replier: subscribes('solace/samples/python/direct/hello/>'), and replies with a greetings message in the body.
 
-MSG_COUNT = 100
 TOPIC_PREFIX = "solace/samples/python"
-REQUEST_TOPIC = "direct/request"
-REPLY_TOPIC = "direct/reply"
+
+# Handle received messages
+class RequestMessageHandlerImpl(RequestMessageHandler):
+    def on_message(self, request: InboundMessage, replier: Replier):
+        name = request.get_payload_as_string().split("My name is ")[1]
+
+        print(f'============================\n')
+        print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+        print(f'Received request (body):' + request.get_payload_as_string())
+        print(f'----------------------------')
+        print(f'Received request:\n{request}')
+
+        message_id = request.get_application_message_id();
+        if replier is not None:
+            outbound_msg = outbound_msg_builder \
+                            .with_application_message_id(f'{message_id}')\
+                            .build(f'Greetings {name}')
+            replier.reply(outbound_msg)
+            print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+            print(f'Replied with response (body):\n{outbound_msg.get_payload_as_string()}')
+            print(f'----------------------------')
+            print(f'Replied with response:\n{outbound_msg}')
+        else:
+            print(f'Invalid request, reply_to not set')    
+        print(f'============================')
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
@@ -50,7 +72,7 @@ broker_props = {
     "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or ""
     }
 
-request_topic = TOPIC_PREFIX + '/' + REQUEST_TOPIC + '/>'
+request_topic = TOPIC_PREFIX + '/direct/hello/>'
 print(f'\nSubscribing to topic {request_topic}')
 
 # Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
@@ -83,34 +105,18 @@ outbound_msg_builder = messaging_service.message_builder() \
                 .with_property("application", "samples") \
                 .with_property("language", "Python")
 
-count = 0
-print("\nSend a KeyboardInterrupt to stop publishing\n")
-try: 
-    while True:
-        count += 1
-        print(f'============================')
-        print(f'\nCount: {count}')
+print("\nSend a KeyboardInterrupt to stop receiving\n")
 
-        # Direct publish the message with dynamic headers and payload
-        try:
-            request, replier = direct_replier.receive_message(timeout=60000)
-            if replier is not None:
-                print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-                print(f'Received request:\n{request}')
-                outbound_msg = outbound_msg_builder \
-                                .with_application_message_id(f'NEW {count}')\
-                                .build(f'{message_body} + {count}')
-                replier.reply(outbound_msg)
-                print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-                print(f'Replied with response \n{outbound_msg}')
-            else:
-                print(f'Invalid request, reply_to not set')    
-            print(f'============================')
-        except Exception as e:
-            pass
-
-except KeyboardInterrupt:
-    print('\nTerminating replier')
+try:
+    # Callback for received messages
+    direct_replier.receive_async(RequestMessageHandlerImpl())
+    try: 
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print('\nDisconnecting Messaging Service')
+finally:
+    print('\nTerminating receiver')
     direct_replier.terminate()
     print('\nDisconnecting Messaging Service')
     messaging_service.disconnect()

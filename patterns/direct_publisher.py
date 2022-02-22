@@ -6,7 +6,7 @@ import time
 # Import Solace Python  API modules from the solace package
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from solace.messaging.resources.topic import Topic
-from solace.messaging.publisher.direct_message_publisher import PublishFailureListener
+from solace.messaging.publisher.direct_message_publisher import PublishFailureListener, FailedPublishEvent
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 

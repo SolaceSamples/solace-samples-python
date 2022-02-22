@@ -1,7 +1,7 @@
 """module to handle service interruption and failures"""
 
 from solace.messaging.messaging_service import MessagingService, ServiceInterruptionListener, ServiceEvent
-from solace.messaging.publisher.direct_message_publisher import PublishFailureListener
+from solace.messaging.publisher.direct_message_publisher import PublishFailureListener, FailedPublishEvent
 from solace.messaging.receiver.inbound_message import InboundMessage
 from solace.messaging.receiver.persistent_message_receiver import PersistentMessageReceiver
 from solace.messaging.resources.queue import Queue

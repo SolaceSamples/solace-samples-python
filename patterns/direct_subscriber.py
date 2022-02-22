@@ -63,7 +63,7 @@ messaging_service.add_reconnection_attempt_listener(service_handler)
 messaging_service.add_service_interruption_listener(service_handler)
 
 # Define a Topic subscriptions 
-topics = [TOPIC_PREFIX + "/dir/sub/>", TOPIC_PREFIX + "/dir/sub/v2/>", "solace/samples/>"]
+topics = [TOPIC_PREFIX + "/dir/sub/>", TOPIC_PREFIX + "/dir/sub/v2/>", "solace/samples/python/>"]
 topics_sub = []
 for t in topics:
     topics_sub.append(TopicSubscription.of(t))

@@ -1,5 +1,5 @@
 ## Goal: A simpe request pulblisher to publish a request with reply_to set to any topic.
-
+# Unlike regular publisher, this will be built on RequestReplyMessagePublisher which exposes the ability to set 'Reply To' field
 import os
 import platform
 import time
@@ -17,6 +17,7 @@ if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # 
 # and a response with a "Greetings {name}" is expected as response.
 #   direct_requestor: publishes('solace/samples/python/direct/hello/{name}, and waits for response (either synchronously or asynchronously)
 #   direct_replier: subscribes('solace/samples/python/direct/hello/>'), and replies with a greetings message in the body.
+
 TOPIC_PREFIX = "solace/samples/python"
 
 name = ""
@@ -67,13 +68,13 @@ messaging_service.add_reconnection_attempt_listener(service_handler)
 messaging_service.add_service_interruption_listener(service_handler)
 
 # Create a direct message requestor and register the error handler
-direct_requestor = messaging_service.request_reply() \
-                        .create_request_reply_message_publisher_builder() \
-                        .build()
+direct_requestor_blocking = messaging_service.request_reply() \
+                                    .create_request_reply_message_publisher_builder() \
+                                    .build()
 
 # Blocking Start thread
-direct_requestor.start()
-print(f'\nDirect Requestor ready? {direct_requestor.is_ready()}')
+direct_requestor_blocking.start()
+print(f'\nDirect Requestor ready? {direct_requestor_blocking.is_ready()}')
 
 # Prepare outbound message payload and body
 message_body = "Hi, My name is " + f'{name}'
@@ -86,7 +87,7 @@ gmt = time.gmtime()
 message_id = calendar.timegm(gmt)
 
 print('\nSend a KeyboardInterrupt to stop publishing')
-try:
+try: 
     print(f'============================')
     topic = Topic.of(TOPIC_PREFIX + '/direct/hello/'  + f'{unique_name}')
     print(f'Publishing to topic:\n{topic}')
@@ -100,22 +101,21 @@ try:
         print(f'Publishing request (body):' + outbound_msg.get_payload_as_string())
         print(f'----------------------------')
         print(f'Publishing message:\n{outbound_msg}')
-        publish_async = direct_requestor.publish(request_message=outbound_msg, \
-                                                request_destination=topic,
-                                                reply_timeout=10000)
-        # we can get the reply from the future
-        response = publish_async.result()
+
+        response = direct_requestor_blocking.publish_await_response(request_message=outbound_msg, \
+                                                                    request_destination=topic, \
+                                                                    reply_timeout=10000)
         print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
         print(f'Received reply (body):\n' + response.get_payload_as_string())
         print(f'----------------------------')
         print(f'Received reply:\n{response}')
-        print(f'============================\n')
+        print(f'============================\n')     
     except KeyboardInterrupt:
         print('\nInterrupted, disconnecting Messaging Service')
     except PubSubPlusClientError as exception:
         print(f'Received a PubSubPlusClientException: {exception}')
 finally:
     print('\nTerminating Requestor')
-    direct_requestor.terminate()
+    direct_requestor_blocking.terminate()
     print('\nDisconnecting Messaging Service')
     messaging_service.disconnect()
