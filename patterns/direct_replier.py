@@ -1,50 +1,54 @@
-## Goal: A simpe request pulblisher to publish a request with reply_to set to any topic.
-# Unlike regular publisher, this will be built on RequestReplyMessagePublisher which exposes the ability to set 'Reply To' field
+## Goal is to demonstrate a replier (a request-reply  pattern) that receives a request asynchornously and responds with a reply
+
 import os
 import platform
 import time
-import calendar;
 
 # Import Solace Python  API modules from the solace package
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, \
             ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from solace.messaging.resources.topic import Topic
 from solace.messaging.resources.topic_subscription import TopicSubscription
-from solace.messaging.receiver.request_reply_message_receiver import RequestMessageHandler, InboundMessage, Replier
+from solace.messaging.receiver.request_reply_message_receiver import RequestMessageHandler, InboundMessage, \
+            RequestReplyMessageReceiver, Replier
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
-
-# Goal is to demonstrate request-reply pattern using Direct messages. A request message carrying {name} is published,
-# and a response with a "Greetings {name}" is expected as response.
-#   direct_requestor: publishes('solace/samples/python/direct/hello/{name}, and waits for response (either synchronously or asynchronously)
-#   direct_replier: subscribes('solace/samples/python/direct/hello/>'), and replies with a greetings message in the body.
 
 TOPIC_PREFIX = "solace/samples/python"
 
 # Handle received messages
 class RequestMessageHandlerImpl(RequestMessageHandler):
-    def on_message(self, request: InboundMessage, replier: Replier):
-        name = request.get_payload_as_string().split("My name is ")[1]
+    def __init__(self, message_builder):
+        self.message_builder = message_builder
 
-        print(f'============================\n')
+    def on_message(self, request: InboundMessage, replier: Replier):
+        payload = request.get_payload_as_string() 
+        if payload == None:
+            payload = request.get_payload_as_bytes()
+            if isinstance(payload, bytearray):
+                print(f"Received a message of type: {type(payload)}. Decoding to string")
+                payload = payload.decode()
+
         print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-        print(f'Received request (body):' + request.get_payload_as_string())
+        print(f'Received request (body):' + payload)
         print(f'----------------------------')
-        print(f'Received request:\n{request}')
+
+        if "This is request message from " in payload:
+            response = f'Greetings {payload.split("This is request message from ")[1]}'
+        else:
+            response = f'Request received!'
 
         message_id = request.get_application_message_id();
         if replier is not None:
             outbound_msg = outbound_msg_builder \
                             .with_application_message_id(f'{message_id}')\
-                            .build(f'Greetings {name}')
+                            .build(response)
             replier.reply(outbound_msg)
             print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
             print(f'Replied with response (body):\n{outbound_msg.get_payload_as_string()}')
             print(f'----------------------------')
-            print(f'Replied with response:\n{outbound_msg}')
         else:
             print(f'Invalid request, reply_to not set')    
-        print(f'============================')
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
@@ -72,7 +76,7 @@ broker_props = {
     "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or ""
     }
 
-request_topic = TOPIC_PREFIX + '/direct/hello/>'
+request_topic = TOPIC_PREFIX + '/direct/request/>'
 print(f'\nSubscribing to topic {request_topic}')
 
 # Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
@@ -91,10 +95,10 @@ messaging_service.add_reconnection_listener(service_handler)
 messaging_service.add_reconnection_attempt_listener(service_handler)
 messaging_service.add_service_interruption_listener(service_handler)
 
-# Create a direct message replier and register the error handler
-direct_replier = messaging_service.request_reply() \
-                        .create_request_reply_message_receiver_builder() \
-                        .build(TopicSubscription.of(request_topic))
+# Create a direct message replier
+direct_replier: RequestReplyMessageReceiver = messaging_service.request_reply() \
+                                                .create_request_reply_message_receiver_builder() \
+                                                .build(TopicSubscription.of(request_topic))
 
 # Blocking Start thread
 direct_replier.start()
@@ -109,7 +113,7 @@ print("\nSend a KeyboardInterrupt to stop receiving\n")
 
 try:
     # Callback for received messages
-    direct_replier.receive_async(RequestMessageHandlerImpl())
+    direct_replier.receive_async(RequestMessageHandlerImpl(outbound_msg_builder))
     try: 
         while True:
             time.sleep(1)

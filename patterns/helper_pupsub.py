@@ -218,9 +218,9 @@ if (action == 'subscribe'):
 # Prepare outbound message payload and body
 message_body = lorem.sentence()
 outbound_msg_builder = messaging_service.message_builder() \
-                            .with_application_message_id("sample_id") \
                             .with_property("application", "samples") \
-                            .with_property("language", "Python") \
+                            .with_property("language", "Python")
+                            # .with_application_message_id("sample_id") \
 
 count = 1
 if (action == 'publish'):

@@ -5,16 +5,21 @@
 import os
 import platform
 import time
+import threading
 
 # Import Solace Python  API modules from the solace package
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, \
                                                 ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from solace.messaging.resources.topic import Topic
-from solace.messaging.publisher.direct_message_publisher import PublishFailureListener, FailedPublishEvent
+from solace.messaging.publisher.persistent_message_publisher import PersistentMessagePublisher, MessagePublishReceiptListener
+from solace.messaging.receiver.persistent_message_receiver import PersistentMessageReceiver
+from solace.messaging.resources.queue import Queue
 from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.receiver.message_receiver import MessageHandler, InboundMessage
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
+
+lock = threading.Lock() # lock object that is not owned by any thread. Used for synchronization and counting the 
 
 TOPIC_PREFIX = "solace/samples/python"
 
@@ -35,11 +40,6 @@ class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, Ser
         print(f"Error cause: {e.get_cause()}")
         print(f"Message: {e.get_message()}")
 
-# Inner class for publish error handling
-class PublisherErrorHandling(PublishFailureListener):
-    def on_failed_publish(self, e: "FailedPublishEvent"):
-        print("on_failed_publish")
-
 # Inner class to handle received messages
 class ProcessorImpl(MessageHandler):
     def __init__(self, publisher):
@@ -54,8 +54,8 @@ class ProcessorImpl(MessageHandler):
 
 
     def on_message(self, message: InboundMessage):
-        publish_topic = Topic.of(TOPIC_PREFIX + f'/direct/processor/output')
-        subscribe_topic = message.get_destination_name()
+        publish_topic = Topic.of(TOPIC_PREFIX + f'/persistent/processor/output')
+        destination_name = message.get_destination_name()
 
         payload = message.get_payload_as_string() 
         if payload == None:
@@ -77,7 +77,7 @@ class ProcessorImpl(MessageHandler):
         self.publisher.publish(destination=publish_topic, message=output_msg)
 
         print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-        print(f'Received input message on {subscribe_topic}')
+        print(f'Received input message on {destination_name}')
         print(f'Received input message (body):\n{payload}')
         print(f'Received input message dump (body):\n{message}')
         print(f'----------------------------')
@@ -86,6 +86,19 @@ class ProcessorImpl(MessageHandler):
         print(f'Published output message (body):\n{processed_payload}')
         print(f'Published output message dump (body):\n{output_msg}')
         print(f'----------------------------')
+
+class MessageReceiptListener(MessagePublishReceiptListener):
+    def __init__(self):
+        self._receipt_count = 0
+
+    @property
+    def receipt_count(self):
+        return self._receipt_count
+
+    def on_publish_receipt(self, publish_receipt: 'PublishReceipt'):
+        with lock:
+            self._receipt_count += 1
+            print(f"\npublish_receipt:\n {self.receipt_count}\n")
 
 # Broker Config. Note: Could pass other properties Look into
 broker_props = {
@@ -111,30 +124,33 @@ messaging_service.add_reconnection_listener(service_handler)
 messaging_service.add_reconnection_attempt_listener(service_handler)
 messaging_service.add_service_interruption_listener(service_handler)
  
-# Create a direct message publisher and start it
-publisher = messaging_service.create_direct_message_publisher_builder().build()
-publisher.set_publish_failure_listener(PublisherErrorHandling())
+# Create a persistent message publisher and start it
+publisher: PersistentMessagePublisher = messaging_service.create_persistent_message_publisher_builder().build()
 
 # Blocking Start thread
-publisher.start()
-print(f'Direct Publisher ready? {publisher.is_ready()}')
+publisher.start_async()
+print(f'Persistent Publisher ready? {publisher.is_ready()}')
 
-# Define a Topic subscriptions 
-subscribe_topic_name = TOPIC_PREFIX + "/direct/processor/input"
-subscribe_topic = [TopicSubscription.of(subscribe_topic_name)]
-print(f'\nSubscribed to topic: {subscribe_topic_name}')
+# set a message delivery listener to the publisher
+receipt_listener = MessageReceiptListener()
+publisher.set_message_publish_receipt_listener(receipt_listener)
+
+# NOTE: This assumes that a persistent queue already exists on the broker with the same name 
+# and a subscription for topic `solace/samples/python/persistent/processor/output``
+queue_name = 'Q/test/input'
+durable_exclusive_queue = Queue.durable_exclusive_queue(queue_name)
 
 # Build a Receiver with the given topics and start it
-direct_receiver = messaging_service.create_direct_message_receiver_builder()\
-                        .with_subscriptions(subscribe_topic)\
-                        .build()
-direct_receiver.start()
-print(f'Direct Subscriber is running? {direct_receiver.is_running()}')
+persistent_receiver: PersistentMessageReceiver = messaging_service.create_persistent_message_receiver_builder() \
+                                                                        .with_message_auto_acknowledgement() \
+                                                                        .build(durable_exclusive_queue)
+persistent_receiver.start()
+print(f'Persistent Subscriber is running? {persistent_receiver.is_running()}')
 
 print("\nSend a KeyboardInterrupt to stop processor\n")
 try:
     # Callback for received messages
-    direct_receiver.receive_async(ProcessorImpl(publisher))
+    persistent_receiver.receive_async(ProcessorImpl(publisher))
     try: 
         while True:
             time.sleep(1)
@@ -142,6 +158,6 @@ try:
         print('\nDisconnecting Messaging Service')
 finally:
     print('\nTerminating receiver')
-    direct_receiver.terminate()
+    persistent_receiver.terminate()
     print('\nDisconnecting Messaging Service')
     messaging_service.disconnect()
