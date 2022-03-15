@@ -13,6 +13,7 @@ from solace.messaging.resources.topic import Topic
 from solace.messaging.publisher.direct_message_publisher import PublishFailureListener, FailedPublishEvent
 from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.receiver.message_receiver import MessageHandler, InboundMessage
+from solace.messaging.errors.pubsubplus_client_error import PubSubPlusClientError
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
@@ -42,10 +43,8 @@ class PublisherErrorHandling(PublishFailureListener):
 
 # Inner class to handle received messages
 class ProcessorImpl(MessageHandler):
-    def __init__(self, publisher):
+    def __init__(self, publisher, messaging_service):
         self.publisher = publisher
-
-        # Prepare outbound message payload and body
         self.msg_builder = messaging_service.message_builder() \
                                 .with_application_message_id("sample_id") \
                                 .with_property("application", "samples") \
@@ -57,12 +56,10 @@ class ProcessorImpl(MessageHandler):
         publish_topic = Topic.of(TOPIC_PREFIX + f'/direct/processor/output')
         subscribe_topic = message.get_destination_name()
 
-        payload = message.get_payload_as_string() 
-        if payload == None:
-            payload = message.get_payload_as_bytes()
-            if isinstance(payload, bytearray):
-                print(f"Received a message of type: {type(payload)}. Decoding to string")
-                payload = payload.decode()
+        payload = message.get_payload_as_string() if message.get_payload_as_string() != None else message.get_payload_as_bytes()
+        if isinstance(payload, bytearray):
+            print(f"Received a message of type: {type(payload)}. Decoding to string")
+            payload = payload.decode()
 
         print(f'Received input message (body string):\n{payload}')   
 
@@ -134,12 +131,16 @@ print(f'Direct Subscriber is running? {direct_receiver.is_running()}')
 print("\nSend a KeyboardInterrupt to stop processor\n")
 try:
     # Callback for received messages
-    direct_receiver.receive_async(ProcessorImpl(publisher))
+    direct_receiver.receive_async(ProcessorImpl(publisher, messaging_service))
     try: 
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         print('\nDisconnecting Messaging Service')
+# Handle API exception 
+except PubSubPlusClientError as exception:
+  print(f'\nMake sure queue {queue_name} exists on broker!')
+
 finally:
     print('\nTerminating receiver')
     direct_receiver.terminate()

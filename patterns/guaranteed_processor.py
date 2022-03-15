@@ -7,7 +7,7 @@ import platform
 import time
 import threading
 
-# Import Solace Python  API modules from the solace package
+# Import Solace Python API modules from the solace package
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, \
                                                 ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from solace.messaging.resources.topic import Topic
@@ -16,6 +16,7 @@ from solace.messaging.receiver.persistent_message_receiver import PersistentMess
 from solace.messaging.resources.queue import Queue
 from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.receiver.message_receiver import MessageHandler, InboundMessage
+from solace.messaging.errors.pubsubplus_client_error import PubSubPlusClientError
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
@@ -42,16 +43,13 @@ class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, Ser
 
 # Inner class to handle received messages
 class ProcessorImpl(MessageHandler):
-    def __init__(self, publisher):
+    def __init__(self, publisher, messaging_service):
         self.publisher = publisher
-
-        # Prepare outbound message payload and body
         self.msg_builder = messaging_service.message_builder() \
                                 .with_application_message_id("sample_id") \
                                 .with_property("application", "samples") \
                                 .with_property("payload", "processed") \
-                                .with_property("language", "Python") \
-
+                                .with_property("language", "Python")
 
     def on_message(self, message: InboundMessage):
         publish_topic = Topic.of(TOPIC_PREFIX + f'/persistent/processor/output')
@@ -150,12 +148,16 @@ print(f'Persistent Subscriber is running? {persistent_receiver.is_running()}')
 print("\nSend a KeyboardInterrupt to stop processor\n")
 try:
     # Callback for received messages
-    persistent_receiver.receive_async(ProcessorImpl(publisher))
+    persistent_receiver.receive_async(ProcessorImpl(publisher, messaging_service))
     try: 
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         print('\nDisconnecting Messaging Service')
+# Handle API exception 
+except PubSubPlusClientError as exception:
+  print(f'\nMake sure queue {queue_name} exists on broker!')
+
 finally:
     print('\nTerminating receiver')
     persistent_receiver.terminate()

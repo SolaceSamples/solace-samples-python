@@ -22,21 +22,16 @@ class RequestMessageHandlerImpl(RequestMessageHandler):
         self.message_builder = message_builder
 
     def on_message(self, request: InboundMessage, replier: Replier):
-        payload = request.get_payload_as_string() 
-        if payload == None:
-            payload = request.get_payload_as_bytes()
-            if isinstance(payload, bytearray):
-                print(f"Received a message of type: {type(payload)}. Decoding to string")
-                payload = payload.decode()
+        payload = request.get_payload_as_string() if request.get_payload_as_string() != None else request.get_payload_as_bytes()
+        if isinstance(payload, bytearray):
+            print(f"Received a message of type: {type(payload)}. Decoding to string")
+            payload = payload.decode()
 
         print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
         print(f'Received request (body):' + payload)
         print(f'----------------------------')
 
-        if "This is request message from " in payload:
-            response = f'Greetings {payload.split("This is request message from ")[1]}'
-        else:
-            response = f'Request received!'
+        response = f'Greetings {payload.split("This is request message from ")[1]}!' if "This is request message from " in payload else 'Response body'
 
         message_id = request.get_application_message_id();
         if replier is not None:
