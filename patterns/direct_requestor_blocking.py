@@ -98,6 +98,7 @@ try:
         print(f'----------------------------')
         print(f'Publishing message:\n{outbound_msg}')
 
+        # Block the thread and wait for the response. Raise error after timeout
         response = direct_requestor_blocking.publish_await_response(request_message=outbound_msg, \
                                                                     request_destination=topic, \
                                                                     reply_timeout=3000)

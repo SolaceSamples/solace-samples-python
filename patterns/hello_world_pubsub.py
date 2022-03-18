@@ -22,7 +22,15 @@ class MessageHandlerImpl(MessageHandler):
         if "quit" in message.get_destination_name():
             print("QUIT message received, shutting down.")
             SHUTDOWN = True 
-        print("\n" + f"Message dump: {message.solace_message.get_message_dump()} \n")
+            
+        # Check if the payload is a String or Byte, decode if its the later
+        payload = message.get_payload_as_string() if message.get_payload_as_string() != None else message.get_payload_as_bytes()
+        if isinstance(payload, bytearray):
+            print(f"Received a message of type: {type(payload)}. Decoding to string")
+            payload = payload.decode()
+        
+        print("\n" + f"Message payload: {payload} \n")
+        print("\n" + f"Message dump: {message} \n")
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):

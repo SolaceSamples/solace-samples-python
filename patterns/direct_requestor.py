@@ -100,7 +100,7 @@ try:
         publish_async = direct_requestor.publish(request_message=outbound_msg, \
                                                 request_destination=topic,
                                                 reply_timeout=3000)
-        # we can get the reply from the future
+        # we can get the reply in the future
         response = publish_async.result()
         print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
         print(f'Received reply (body):\n' + response.get_payload_as_string())
