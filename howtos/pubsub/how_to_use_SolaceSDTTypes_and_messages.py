@@ -7,7 +7,7 @@ from solace.messaging.utils.manageable import Metric
 from howtos.how_to_access_api_metrics import HowToAccessApiMetrics
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, \
     ServiceInterruptionListener, ServiceEvent
-from solace.messaging.publisher.direct_message_publisher import PublishFailureListener
+from solace.messaging.publisher.direct_message_publisher import PublishFailureListener, FailedPublishEvent
 from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.receiver.message_receiver import MessageHandler
 from solace.messaging.resources.topic import Topic

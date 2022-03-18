@@ -5,12 +5,12 @@ import time
 # Import Solace Python  API modules
 from solace.messaging.messaging_service import MessagingService, ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener, RetryStrategy, ServiceEvent
 from solace.messaging.errors.pubsubplus_client_error import PubSubPlusClientError
-from solace.messaging.publisher.direct_message_publisher import PublishFailureListener
+from solace.messaging.publisher.direct_message_publisher import PublishFailureListener, FailedPublishEvent
 from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.receiver.message_receiver import MessageHandler
 from solace.messaging.config.solace_properties.message_properties import APPLICATION_MESSAGE_ID
-# from solace.messaging.core.solace_message import SolaceMessage
 from solace.messaging.resources.topic import Topic
+from solace.messaging.receiver.inbound_message import InboundMessage
 
 TOPIC_PREFIX = "solace/samples"
 SHUTDOWN = False
