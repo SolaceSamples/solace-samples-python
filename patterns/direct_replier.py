@@ -22,25 +22,28 @@ class RequestMessageHandlerImpl(RequestMessageHandler):
         self.message_builder = message_builder
 
     def on_message(self, request: InboundMessage, replier: Replier):
+
+        # Check if the payload is a String or Byte, decode if its the later
         payload = request.get_payload_as_string() if request.get_payload_as_string() != None else request.get_payload_as_bytes()
         if isinstance(payload, bytearray):
             print(f"Received a message of type: {type(payload)}. Decoding to string")
             payload = payload.decode()
 
         print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-        print(f'Received request (body):' + payload)
+        print(f'Received request payload:' + payload)
         print(f'----------------------------')
 
+        # Prepare response payload
         response = f'Greetings {payload.split("This is request message from ")[1]}!' if "This is request message from " in payload else 'Response body'
 
-        message_id = request.get_application_message_id();
+        message_id = request.get_application_message_id()
         if replier is not None:
             outbound_msg = outbound_msg_builder \
                             .with_application_message_id(f'{message_id}')\
                             .build(response)
             replier.reply(outbound_msg)
             print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-            print(f'Replied with response (body):\n{outbound_msg.get_payload_as_string()}')
+            print(f'Replied with response payload: {outbound_msg.get_payload_as_string()}')
             print(f'----------------------------')
         else:
             print(f'Invalid request, reply_to not set')    

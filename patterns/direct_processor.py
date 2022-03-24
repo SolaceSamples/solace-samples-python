@@ -56,15 +56,14 @@ class ProcessorImpl(MessageHandler):
         publish_topic = Topic.of(TOPIC_PREFIX + f'/direct/processor/output')
         subscribe_topic = message.get_destination_name()
 
+        # Check if the payload is a String or Byte, decode if its the later
         payload = message.get_payload_as_string() if message.get_payload_as_string() != None else message.get_payload_as_bytes()
         if isinstance(payload, bytearray):
             print(f"Received a message of type: {type(payload)}. Decoding to string")
             payload = payload.decode()
 
-        print(f'Received input message (body string):\n{payload}')   
-
+        # Process the message. For simplicity, we will be uppercasing the payload.
         processed_payload = payload.upper()
-        print(f'Published output message (body):\n{processed_payload}')
 
         if message.get_application_message_id() != None:
             self.msg_builder = self.msg_builder \
@@ -75,13 +74,13 @@ class ProcessorImpl(MessageHandler):
 
         print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
         print(f'Received input message on {subscribe_topic}')
-        print(f'Received input message (body):\n{payload}')
-        print(f'Received input message dump (body):\n{message}')
+        print(f'Received input message (body): {payload}')
+        # print(f'Received input message dump (body):{message}')
         print(f'----------------------------')
         print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
         print(f'Published output message to: {publish_topic}')
-        print(f'Published output message (body):\n{processed_payload}')
-        print(f'Published output message dump (body):\n{output_msg}')
+        print(f'Published output message (body): {processed_payload}')
+        # print(f'Published output message dump (body):{output_msg}')
         print(f'----------------------------')
 
 # Broker Config. Note: Could pass other properties Look into
