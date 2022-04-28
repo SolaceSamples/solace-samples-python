@@ -9,6 +9,7 @@ from solace.messaging.messaging_service import MessagingService, ReconnectionLis
 from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.receiver.message_receiver import MessageHandler, InboundMessage
 from solace.messaging.config.transport_security_strategy import TLS
+# from solace.messaging.config.authentication_strategy import ClientCertificateAuthentication
 
 
 
@@ -52,6 +53,9 @@ broker_props = {
 
 # transport_security_strategy = TLS.create().without_certificate_validation()
 transport_security_strategy = TLS.create().with_certificate_validation(True, False, "./trusted-store")
+# authentication_strategy = ClientCertificateAuthentication.of("/path/to/certificate","/path/to/key","key_password")\
+#                           .with_certificate_and_key_pem("/path/to/pem/file")\
+#                           .with_private_key_password("private_key_password")
 
 # Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
 # Note: The reconnections strategy could also be configured using the broker properties object
@@ -59,6 +63,7 @@ messaging_service = MessagingService.builder().from_properties(broker_props)\
                     .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(20,3))\
                     .with_transport_security_strategy(transport_security_strategy)\
                     .build()
+                    # .with_authentication_strategy(authentication_strategy)\
 
 # Blocking connect thread
 messaging_service.connect()

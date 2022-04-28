@@ -1,8 +1,9 @@
+autopep8==1.6.0
 certifi==2020.12.5
 chardet==4.0.0
 idna==2.10
+pycodestyle==2.8.0
 requests==2.25.1
-solace-pubsubplus==1.2.1
+solace-pubsubplus==1.3.0
+toml==0.10.2
 urllib3==1.26.4
-lorem-text=2.1
-

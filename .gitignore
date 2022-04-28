@@ -4,3 +4,4 @@ venv
 __pycache__
 .python-version
 trusted-store
+pubsubplus-python-client/
