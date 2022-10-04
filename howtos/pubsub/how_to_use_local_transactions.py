@@ -30,7 +30,7 @@ class HowtoForLocalTransactions:
         transactional_service = service.create_transactional_service_builder().build().connect()
         publisher = transactional_service.create_transactional_message_publisher_builder().build().start()
         message = service.message_builder().build(f"Message for topic {topic}")
-        publisher.publish(message, topic.get_name())
+        publisher.publish(message, topic)
         try:
             transactional_service.commit()
         except TransactionRollbackError:
@@ -48,20 +48,22 @@ class HowtoForLocalTransactions:
     def publish_to_topics(service, topics, count):
         """ Publish <count> messages to each topic. One transaction per topic:
             Either all messages make it to a topic, or none.
-            Returns the number of messages actually delivered. """
+            Returns the messages actually delivered. """
 
-        messages_delivered = 0
+        messages_delivered = []
         transactional_service = service.create_transactional_service_builder().build().connect()
         publisher = transactional_service.create_transactional_message_publisher_builder().build().start()
         for topic in topics:
             try:
+                messages_in_this_transaction = []
                 for i in range(count):
                     message = service.message_builder().build(f"Message #{i} for topic {topic.get_name()}")
                     publisher.publish(message, topic)
+                    messages_in_this_transaction.append(message)
                 # Publish all messages to a topic, or none at all:
                 transactional_service.commit()
-                # Do not count messages until the commit succeeds.
-                messages_delivered += count
+                # Can't be sure messages were actually published until the commit succeeds.
+                messages_delivered.extend(messages_in_this_transaction)
             except TransactionRollbackError:
                 # Commit failed.
                 pass
@@ -124,7 +126,7 @@ class HowtoForLocalTransactions:
             topics = []
             queues = []
             for i in range(number_of_queues):
-                topic_name = constants.TOPIC_ENDPOINT_DEFAULT + str(i)
+                topic_name = constants.TOPIC_ENDPOINT + "/local_transaction_sample/" + str(i)
                 topic = Topic.of(topic_name)
                 topics.append(topic)
                 queue_name = constants.QUEUE_NAME_FORMAT.substitute(iteration=topic_name)
@@ -138,12 +140,20 @@ class HowtoForLocalTransactions:
                 queue = Queue.durable_exclusive_queue(queue_name)
                 queues.append(queue)
 
-                # Publish the expected number of messages to the queues
-                HowtoForLocalTransactions.publish_to_topics(messaging_service, topics, messages_per_queue)
-                # One extra to mess things up
-                HowtoForLocalTransactions.publish_to_topic(messaging_service, topics[-1])
-                # Consume them
-                HowtoForLocalTransactions.receive_from_queues(messaging_service, queues, messages_per_queue)
+            # Publish the expected number of messages to the queues
+            messages_delivered_to_topics = HowtoForLocalTransactions.publish_to_topics(messaging_service, topics, messages_per_queue)
+            print("Messages published:")
+            for message in messages_delivered_to_topics:
+                print(message)
+            # One extra to mess things up
+            HowtoForLocalTransactions.publish_to_topic(messaging_service, topics[-1])
+            # Consume them
+            consumed_messages = HowtoForLocalTransactions.receive_from_queues(messaging_service, queues, messages_per_queue)
+            print("Messages consumed:")
+            #print(roundtrip_messages)
+            for message in roundtrip_messages:
+                print(message)
+
 
         finally:
             messaging_service.disconnect()
