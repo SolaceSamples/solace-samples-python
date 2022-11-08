@@ -4,8 +4,8 @@
     "solace.messaging.transport.host.secured": "tcps://localhost:55443",
     "solace.messaging.transport.host.compressed": "tcp://localhost:55003",
     "solace.messaging.service.vpn-name": "default",
-    "solace.messaging.authentication.scheme.basic.username": "default",
-    "solace.messaging.authentication.scheme.basic.password": "default"
+    "solace.messaging.authentication.basic.username": "default",
+    "solace.messaging.authentication.basic.password": "default"
   },
   "semp": {
     "semp.hostname": "https://localhost:1943",
