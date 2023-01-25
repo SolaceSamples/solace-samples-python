@@ -13,6 +13,8 @@ from solace.messaging.config.retry_strategy import RetryStrategy
 from solace.messaging.receiver.persistent_message_receiver import PersistentMessageReceiver
 from solace.messaging.receiver.message_receiver import MessageHandler, InboundMessage
 from solace.messaging.errors.pubsubplus_client_error import PubSubPlusClientError
+from solace.messaging.config.missing_resources_creation_configuration import MissingResourcesCreationStrategy
+
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
@@ -83,6 +85,7 @@ durable_exclusive_queue = Queue.durable_exclusive_queue(queue_name)
 try:
   # Build a receiver and bind it to the durable exclusive queue
   persistent_receiver: PersistentMessageReceiver = messaging_service.create_persistent_message_receiver_builder()\
+            .with_missing_resources_creation_strategy(MissingResourcesCreationStrategy.CREATE_ON_START)\
             .build(durable_exclusive_queue)
   persistent_receiver.start()
 
