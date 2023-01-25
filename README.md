@@ -14,7 +14,7 @@ This repo hosts sample code to showcase how the Solace Python API could be used.
 1. [Optional] Setup python virtual environment `python3 -m venv venv`
 1. [Optional] Activate virtual environment:  
    1.1 MacOS/Linux: `source venv/bin/activate`  
-   1.2 Windows: `source venv/Scripts/activate`
+   1.2 Windows: `venv/Scripts/activate`
 1. After activating the virtual environment, make sure you have the latest pip installed `pip install --upgrade pip`
 
 ## Install the Solace Python API and other dependencies
