@@ -77,7 +77,7 @@ class HowToPublishPersistentMessage:
     def create_persistent_message_publisher(service: MessagingService) -> 'PersistentMessagePublisher':
         """method to create, build and start persistent publisher"""
         publisher: PersistentMessagePublisher = service.create_persistent_message_publisher_builder().build()
-        publisher.start_async()
+        publisher.start()
         print('PERSISTENT publisher started')
         return publisher
 

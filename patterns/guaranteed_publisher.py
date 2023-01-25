@@ -71,7 +71,7 @@ messaging_service.add_service_interruption_listener(service_handler)
 
 # Create a persistent message publisher and start it
 publisher: PersistentMessagePublisher = messaging_service.create_persistent_message_publisher_builder().build()
-publisher.start_async()
+publisher.start()
 
 # set a message delivery listener to the publisher
 receipt_listener = MessageReceiptListener()
