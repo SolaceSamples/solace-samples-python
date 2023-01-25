@@ -187,7 +187,7 @@ if (action == 'publish'):
         print(f'Direct Publisher ready? {publisher.is_ready()}')
     else:
         publisher: PersistentMessagePublisher = messaging_service.create_persistent_message_publisher_builder().build()
-        publisher.start_async()
+        publisher.start()
         print(f'Persistent Publisher ready? {publisher.is_ready()}')
         # set a message delivery listener to the publisher
         receipt_listener = MessageReceiptListener()
