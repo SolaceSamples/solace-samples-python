@@ -13,11 +13,16 @@ from solace.messaging.config.retry_strategy import RetryStrategy
 from solace.messaging.receiver.persistent_message_receiver import PersistentMessageReceiver
 from solace.messaging.receiver.message_receiver import MessageHandler, InboundMessage
 from solace.messaging.errors.pubsubplus_client_error import PubSubPlusClientError
+from solace.messaging.config.missing_resources_creation_configuration import MissingResourcesCreationStrategy
+
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
 # Handle received messages
 class MessageHandlerImpl(MessageHandler):
+    def __init__(self, persistent_receiver: PersistentMessageReceiver):
+        self.receiver: PersistentMessageReceiver = persistent_receiver
+
     def on_message(self, message: InboundMessage):
         # Check if the payload is a String or Byte, decode if its the later
         payload = message.get_payload_as_string() if message.get_payload_as_string() != None else message.get_payload_as_bytes()
@@ -28,6 +33,7 @@ class MessageHandlerImpl(MessageHandler):
         topic = message.get_destination_name()
         print("\n" + f"Received message on: {topic}")
         print("\n" + f"Message payload: {payload} \n")
+        self.receiver.ack(message)
         # print("\n" + f"Message dump: {message} \n")
 
 # Inner classes for error handling
@@ -79,12 +85,12 @@ durable_exclusive_queue = Queue.durable_exclusive_queue(queue_name)
 try:
   # Build a receiver and bind it to the durable exclusive queue
   persistent_receiver: PersistentMessageReceiver = messaging_service.create_persistent_message_receiver_builder()\
-            .with_message_auto_acknowledgement()\
+            .with_missing_resources_creation_strategy(MissingResourcesCreationStrategy.CREATE_ON_START)\
             .build(durable_exclusive_queue)
   persistent_receiver.start()
 
   # Callback for received messages
-  persistent_receiver.receive_async(MessageHandlerImpl())
+  persistent_receiver.receive_async(MessageHandlerImpl(persistent_receiver))
   print(f'PERSISTENT receiver started... Bound to Queue [{durable_exclusive_queue.get_name()}]')
   try: 
       while True:

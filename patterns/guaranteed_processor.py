@@ -125,7 +125,7 @@ messaging_service.add_service_interruption_listener(service_handler)
 publisher: PersistentMessagePublisher = messaging_service.create_persistent_message_publisher_builder().build()
 
 # Blocking Start thread
-publisher.start_async()
+publisher.start()
 print(f'Persistent Publisher ready? {publisher.is_ready()}')
 
 # set a message delivery listener to the publisher
