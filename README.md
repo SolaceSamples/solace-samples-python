@@ -39,7 +39,7 @@ To run any of the howtos samples, you will have to set the `PYTHONPATH` environm
 
 `PYTHONPATH=.. python <name_of_file>.py`
 
-### Running all the samplers
+### Running all the samples
 
 `PYTHONPATH=.. python sampler_master.py`
 
