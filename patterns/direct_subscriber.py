@@ -11,6 +11,7 @@ from solace.messaging.receiver.message_receiver import MessageHandler, InboundMe
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
 TOPIC_PREFIX = "solace/samples/python"
+out_payload = []
 
 # Handle received messages
 class MessageHandlerImpl(MessageHandler):
@@ -25,6 +26,8 @@ class MessageHandlerImpl(MessageHandler):
         print("\n" + f"Message Payload String: {payload} \n")
         print("\n" + f"Message Topic: {topic} \n")
         print("\n" + f"Message dump: {message} \n")
+        out_payload.append(payload)
+
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
@@ -95,3 +98,4 @@ finally:
     direct_receiver.terminate()
     print('\nDisconnecting Messaging Service')
     messaging_service.disconnect()
+    print(out_payload)
