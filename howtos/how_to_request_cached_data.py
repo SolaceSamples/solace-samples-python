@@ -1,22 +1,22 @@
 """
-This module contains example snippets on how to request cached data from a direct receiver. These examples assume
-that the direct receiver has already been started, and that it was created from a messaging service which has
-already been connected.
+This module contains example snippets on how to request cached data from a cache, through a direct receiver. These
+examples assume that the direct receiver has already been started, and that it was created from a messaging service
+which has already been connected.
 """
 
-from solace.messaging.utils.correlation_completion_listener import CorrelationCompletionListener
+from solace.messaging.utils.cache_request_outcome_listener import CacheRequestOutcomeListener
 from solace.messaging.utils.cache_request_outcome import CacheRequestOutcome
 from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.resources.cached_message_subscription_request import CachedMessageSubscriptionRequest
 
-class MyCorrelationCompletionListener(CorrelationCompletionListener):
+class MyCacheRequestOutcomeListener(CacheRequestOutcomeListener):
     def on_completion(result: CacheRequestOutcome, correlation_id: int, e: Exception):
         print("Completed!")
 
 class HowToUseCachedMessageSubscriptionRequests:
     """
     Sampler for making cache requests. Usage of cache subscriptions require
-    configuration and hosting of SolCache application.
+    configuration and hosting of PubSubPlusCache application.
     """
     def create_subscription_request_to_receive_cached_and_live_messages(subscription_expression: str,
                                                                         cache_name: str,
@@ -40,10 +40,10 @@ class HowToUseCachedMessageSubscriptionRequests:
         cached_message_subscription_request = CachedMessageSubscriptionRequest.asAvailable(cache_name,
                                                                                            TopicSubscription.of(subscription_expression),
                                                                                            cache_access_timeout)
-        correlation_id = 12345
-        correlation_completion_listener = MyCorrelationCompletionListener()
+        correlation_id = 1
+        cache_request_outcome_listener = MyCacheRequestOutcomeListener()
 
-        direct_message_receiver.requestCached(cached_message_subscription_request, correlation_id, correlation_completion_listener)
+        direct_message_receiver.request_cached(cached_message_subscription_request, correlation_id, cache_request_outcome_listener)
 
     def create_subscription_request_to_receive_latest_message(direct_message_receiver: 'DirectMessageReceiver',
                                                               subscription_expression: str,
@@ -70,12 +70,12 @@ class HowToUseCachedMessageSubscriptionRequests:
                                                                  TopicSubscription.of(subscriptionExpression),
                                                                  cache_access_timeout)
 
-        correlation_id = 12345
-        correlation_completion_listener = MyCorrelationCompletionListener()
+        correlation_id = 2
+        cache_request_outcome_listener = MyCacheRequestOutcomeListener()
 
-        direct_receiver.request_cached(cached_message_subscription_request_for_latest_of_cached_or_live_messages,
+        direct_message_receiver.request_cached(cached_message_subscription_request_for_latest_of_cached_or_live_messages,
                                        correlation_id,
-                                       correlation_completion_listener)
+                                       cache_request_outcome_listener)
 
     def create_cached_subscription_with_more_options(direct_message_receiver: 'DirectMessageReceiver',
                                                      subscription_expression: 'SubscriptionExpression',
@@ -87,7 +87,7 @@ class HowToUseCachedMessageSubscriptionRequests:
         An example how to create and perform CachedMessageSubscriptionRequest to receive first cached
         messages when available, followed by live messages. Additional cached message properties such
         as max number of cached messages and age of a message from cache can be specified. Live messages
-        will be queues until the solace cache response is received.
+        will be queued until the solace cache response is received.
         Queued live messages are delivered to the application after the cached messages are delivered.
         Args:
             direct_message_receiver(DirectMessageReceiver): An already configured and connected receiver
@@ -96,7 +96,6 @@ class HowToUseCachedMessageSubscriptionRequests:
             cache_access_timeout(int): Solace cache request timeout, in milliseconds
             max_cached_messages(int): The max number of messages expected to be received from a Solace cache
             cached_message_age(int): The maximum age, in seconds, of the messages to retrieve from a Solace cache
-            ignore_cache_access_exceptions(bool): `True` prevents subscription rollback on Solace cache request errors. `False` is the default value.
         Raises:
             InterruptedException: If any thread has interrupted the current thread
             PubSubPlusClientException: If the operation could not be performed
@@ -108,10 +107,10 @@ class HowToUseCachedMessageSubscriptionRequests:
                                                                                                                  cache_access_timeout,
                                                                                                                  max_cached_messages,
                                                                                                                  cached_message_age)
-        correlation_id = 12345
-        completion_listener = MyCorrelationCompletionListener()
+        correlation_id = 3
+        completion_listener = MyCacheRequestOutcomeListener()
 
-        direct_receiver.requestCached(subscription_receive_cached_followed_by_live_messages, correlation_id, completion_listener)
+        direct_message_receiver.request_cached(subscription_receive_cached_followed_by_live_messages, correlation_id, completion_listener)
 
     def create_subscription_to_receiver_only_cached_messages(direct_message_receiver: 'DirectMessageReceiver',
                                                              subscription_expression: str,
@@ -130,10 +129,10 @@ class HowToUseCachedMessageSubscriptionRequests:
             PubSubPlusClientException: If the operation could not be performed
             IllegalStateException: If the service is not running
         """
-        subscription_request_to_receive_cached_followed_by_live_messages = CachedMessageSubscriptionRequest.cached_only(cache_name,
-                                                                                                                        TopicSubscription.of(subscription_expression),
-                                                                                                                        cache_access_timeout)
-        correlation_id = 12345
-        completion_listener = MyCorrelationCompletionListener()
+        subscription_request_to_receive_only_cached_messages = CachedMessageSubscriptionRequest.cached_only(cache_name,
+                                                                                                            TopicSubscription.of(subscription_expression),
+                                                                                                            cache_access_timeout)
+        correlation_id = 4
+        completion_listener = MyCacheRequestOutcomeListener()
 
-        receiver.requestCached(subscription_request_to_receive_cached_followed_by_live_messages, correlation_id, completion_listener)
+        receiver.request_cached(subscription_request_to_receive_only_cached_messages, correlation_id, completion_listener)
