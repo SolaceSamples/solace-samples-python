@@ -16,7 +16,7 @@ class MyCacheRequestOutcomeListener(CacheRequestOutcomeListener):
 class HowToUseCachedMessageSubscriptionRequests:
     """
     Sampler for making cache requests. Usage of cache subscriptions require
-    configuration and hosting of PubSubPlusCache application.
+    configuration and hosting of PubSub+ Cache application.
     """
     def create_subscription_request_to_receive_cached_and_live_messages(subscription_expression: str,
                                                                         cache_name: str,
@@ -135,4 +135,4 @@ class HowToUseCachedMessageSubscriptionRequests:
         correlation_id = 4
         completion_listener = MyCacheRequestOutcomeListener()
 
-        receiver.request_cached(subscription_request_to_receive_only_cached_messages, correlation_id, completion_listener)
+        direct_message_receiver.request_cached(subscription_request_to_receive_only_cached_messages, correlation_id, completion_listener)
