@@ -15,7 +15,7 @@ from typing import List
 
 from solace_otel.messaging.trace.propagation import InboundMessageCarrier, InboundMessageGetter, OutboundMessageCarrier, OutboundMessageSetter
 
-TRACER_NAME = "my_tracer"
+TRACER_NAME = "myAppTracer"
 OTEL_MESSAGE = "This is an OTel message"
 BAGGAGE_KEY_1 = "key1"
 BAGGAGE_VALUE_1 = "value1"
