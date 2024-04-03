@@ -45,7 +45,7 @@ class OTelMessageHandler(MessageHandler):
              
             carrier = InboundMessageCarrier(message)
 
-            # inject context form a into the message using a carrier, context is implicit
+            # inject current context into message using a carrier, the context selection is implicit
             extracted_ctx = PROPAGATOR.extract(carrier=carrier, getter=InboundMessageGetter())
             self._baggage = baggage.get_all(extracted_ctx)
             
