@@ -106,6 +106,7 @@ def how_to_publish_with_otel(messaging_service: MessagingService, topic_name: st
         * that a durable exclusive queue has been created and configured to process messages with the given topic
         * that a telemetry profile has been configured on the broker
         * that a filter with a subscription to the given topic has been created for that telemetry profile
+        * that a collector is running and has already been configured correctly
         * that these resources are independently cleaned up after this function executes
     """
     queue_name = QUEUE_NAME_FORMAT.substitute(iteration=topic_name)
