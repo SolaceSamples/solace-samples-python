@@ -1,4 +1,5 @@
 from solace.messaging.messaging_service import MessagingService
+from solace.messaging.config.solace_properties import service_properties
 from howtos.sampler_boot import SamplerBoot
 
 boot = SamplerBoot()
@@ -17,7 +18,7 @@ class HowToConfigurePayloadCompression:
             props = boot.broker_properties()
 
             # Set payload compression to 9 (maximum compression)
-            props["solace.messaging.service.payload-compression-level"] = 9
+            props[service_properties.PAYLOAD_COMPRESSION_LEVEL] = 9
 
             messaging_service = MessagingService.builder().from_properties(props) \
                 .build()
