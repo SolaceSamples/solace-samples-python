@@ -125,7 +125,7 @@ direct_receiver = messaging_service.create_direct_message_receiver_builder()\
                         .with_subscriptions(subscribe_topic)\
                         .build()
 direct_receiver.start()
-print(f'Direct Subscriber is running? {direct_receiver.is_running()}')
+print(f'Direct Receiver is running? {direct_receiver.is_running()}')
 
 print("\nSend a KeyboardInterrupt to stop processor\n")
 try:
