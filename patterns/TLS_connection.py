@@ -87,7 +87,7 @@ direct_receiver = messaging_service.create_direct_message_receiver_builder()\
                         .build()
 
 direct_receiver.start()
-print(f'Direct Subscriber is running? {direct_receiver.is_running()}')
+print(f'Direct Receiver is running? {direct_receiver.is_running()}')
 
 try:
     print(f"Subscribing to: {topics}")

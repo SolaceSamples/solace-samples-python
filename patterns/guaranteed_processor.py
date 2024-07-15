@@ -142,7 +142,7 @@ persistent_receiver: PersistentMessageReceiver = messaging_service.create_persis
                                                                         .with_message_auto_acknowledgement() \
                                                                         .build(durable_exclusive_queue)
 persistent_receiver.start()
-print(f'Persistent Subscriber is running? {persistent_receiver.is_running()}')
+print(f'Persistent Receiver is running? {persistent_receiver.is_running()}')
 
 print("\nSend a KeyboardInterrupt to stop processor\n")
 try:

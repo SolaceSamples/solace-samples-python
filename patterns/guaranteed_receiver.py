@@ -1,4 +1,4 @@
-# Consumer that binds to exclusive durable queue
+# Receiver that binds to exclusive durable queue
 # Assumes existence of queue on broker holding messages.
 # Note: create queue with topic subscription 
 # See https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Adding-Topic-Subscriptio.htm for more details
