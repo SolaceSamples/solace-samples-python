@@ -5,7 +5,7 @@ import time
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import TypeVar
 
-from compose.const import DEFAULT_TIMEOUT
+# from compose.const import DEFAULT_TIMEOUT
 from solace.messaging.messaging_service import MessagingService
 
 from solace.messaging.config.solace_properties import service_properties
@@ -197,7 +197,7 @@ class HowToConsumeMessageExclusiveVsSharedMode:
             with ThreadPoolExecutor(max_workers=1) as e:
                 time.sleep(2)
                 e.submit(HowToPublishPersistentMessage.publish_string_message_non_blocking, publisher, topic, message)
-            message_received: 'InboundMessage' = receiver.receive_message(timeout=DEFAULT_TIMEOUT)
+            message_received: 'InboundMessage' = receiver.receive_message(timeout=1000)
 
             receiver.ack(message_received)
             print(f"received message: {message_received.get_payload_as_string()}")
@@ -233,7 +233,7 @@ class HowToConsumeMessageExclusiveVsSharedMode:
                 e.submit(HowToPublishPersistentMessage.publish_typed_message_with_extended_message_props_non_blocking,
                          outbound_msg, publisher, topic, message, additional_message_properties)
 
-            message_received: 'InboundMessage' = receiver.receive_message(timeout=DEFAULT_TIMEOUT)
+            message_received: 'InboundMessage' = receiver.receive_message(timeout=1000)
 
             receiver.ack(message_received)
             print(f"received message: {message_received.get_payload_as_string()}")
