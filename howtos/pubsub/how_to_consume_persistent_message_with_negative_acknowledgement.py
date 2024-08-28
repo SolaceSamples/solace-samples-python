@@ -10,6 +10,7 @@ from solace.messaging.resources.queue import Queue
 from solace.messaging.resources.topic import Topic
 from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.config.message_acknowledgement_configuration import Outcome
+from solace.messaging.utils.manageable import Metric
 from howtos.pubsub.how_to_consume_persistent_message import HowToConsumeMessageExclusiveVsSharedMode
 from howtos.pubsub.how_to_publish_persistent_message import HowToPublishPersistentMessage
 from howtos.sampler_boot import SolaceConstants, SamplerBoot, BasicTestMessageHandler
@@ -45,6 +46,16 @@ class HowToSettlePersistentMessageWithNegativeAcknowledgement:
             message: InboundMessage = receiver.receive_message()
             print(f"the message payload is {message.get_payload_as_string()}")
             receiver.settle(message, outcome_to_settle)
+
+            metrics = service.metrics()
+            message_settle_accepted = metrics.get_value(Metric.PERSISTENT_MESSSAGES_ACCEPTED)
+            message_settle_rejected = metrics.get_value(Metric.PERSISTENT_MESSSAGES_REJECTED)
+            message_settle_failed = metrics.get_value(Metric.PERSISTENT_MESSSAGES_FAILED)
+
+            print(f"Message Settle Accepted: {message_settle_accepted}")
+            print(f"Message Settle Rejected: {message_settle_rejected}")
+            print(f"Message Settle Failed: {message_settle_failed}")
+
         finally:
             receiver.terminate()
             HowToConsumeMessageExclusiveVsSharedMode.delete_queue(queue_to_consume.get_name())
@@ -76,6 +87,16 @@ class HowToSettlePersistentMessageWithNegativeAcknowledgement:
 
             HowToPublishPersistentMessage.publish_string_message_non_blocking(publisher, topic, message)
             event.wait(5)
+
+            metrics = service.metrics()
+            message_settle_accepted = metrics.get_value(Metric.PERSISTENT_MESSSAGES_ACCEPTED)
+            message_settle_rejected = metrics.get_value(Metric.PERSISTENT_MESSSAGES_REJECTED)
+            message_settle_failed = metrics.get_value(Metric.PERSISTENT_MESSSAGES_FAILED)
+
+            print(f"Message Settle Accepted: {message_settle_accepted}")
+            print(f"Message Settle Rejected: {message_settle_rejected}")
+            print(f"Message Settle Failed: {message_settle_failed}")
+
         finally:
             receiver.terminate()
             HowToConsumeMessageExclusiveVsSharedMode.delete_queue(queue_to_consume.get_name())
@@ -92,6 +113,8 @@ class HowToSettlePersistentMessageWithNegativeAcknowledgement:
 
             publisher = HowToPublishPersistentMessage.create_persistent_message_publisher(messaging_service)
 
+            # We will settle the message 2 ways, sync and async, for each Outcome
+            # Therefore, at the end, we will see each message get settle 2 times
             for outcome in outcome_to_settle:
                 HowToSettlePersistentMessageWithNegativeAcknowledgement \
                     .settle_message_sync(service=messaging_service, publisher=publisher, message=message, 
