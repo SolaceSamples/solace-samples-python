@@ -16,7 +16,6 @@ from howtos.pubsub.how_to_publish_persistent_message import HowToPublishPersiste
 from howtos.sampler_boot import SolaceConstants, SamplerBoot, BasicTestMessageHandler
 from howtos.sampler_master import SamplerMaster
 
-X = TypeVar('X')
 constants = SolaceConstants
 boot = SamplerBoot()
 lock = threading.Lock()
