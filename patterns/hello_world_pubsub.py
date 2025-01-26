@@ -24,7 +24,7 @@ class MessageHandlerImpl(MessageHandler):
             SHUTDOWN = True 
             
         # Check if the payload is a String or Byte, decode if its the later
-        payload = message.get_payload_as_string() if message.get_payload_as_string() != None else message.get_payload_as_bytes()
+        payload = message.get_payload_as_string() if message.get_payload_as_string() is not None else message.get_payload_as_bytes()
         if isinstance(payload, bytearray):
             print(f"Received a message of type: {type(payload)}. Decoding to string")
             payload = payload.decode()

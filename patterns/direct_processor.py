@@ -57,7 +57,7 @@ class ProcessorImpl(MessageHandler):
         subscribe_topic = message.get_destination_name()
 
         # Check if the payload is a String or Byte, decode if its the later
-        payload = message.get_payload_as_string() if message.get_payload_as_string() != None else message.get_payload_as_bytes()
+        payload = message.get_payload_as_string() if message.get_payload_as_string() is not None else message.get_payload_as_bytes()
         if isinstance(payload, bytearray):
             print(f"Received a message of type: {type(payload)}. Decoding to string")
             payload = payload.decode()
@@ -65,7 +65,7 @@ class ProcessorImpl(MessageHandler):
         # Process the message. For simplicity, we will be uppercasing the payload.
         processed_payload = payload.upper()
 
-        if message.get_application_message_id() != None:
+        if message.get_application_message_id() is not None:
             self.msg_builder = self.msg_builder \
                                 .with_application_message_id(message.get_application_message_id())
 

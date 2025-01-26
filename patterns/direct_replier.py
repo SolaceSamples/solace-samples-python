@@ -24,7 +24,7 @@ class RequestMessageHandlerImpl(RequestMessageHandler):
     def on_message(self, request: InboundMessage, replier: Replier):
 
         # Check if the payload is a String or Byte, decode if its the later
-        payload = request.get_payload_as_string() if request.get_payload_as_string() != None else request.get_payload_as_bytes()
+        payload = request.get_payload_as_string() if request.get_payload_as_string() is not None else request.get_payload_as_bytes()
         if isinstance(payload, bytearray):
             print(f"Received a message of type: {type(payload)}. Decoding to string")
             payload = payload.decode()
