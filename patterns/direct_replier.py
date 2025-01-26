@@ -14,7 +14,7 @@ from solace.messaging.receiver.request_reply_message_receiver import RequestMess
 
 if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # Disable stdout buffer 
 
-TOPIC_PREFIX = "solace/samples/python"
+TOPIC_PREFIX = "solace/samples/"
 
 # Handle received messages
 class RequestMessageHandlerImpl(RequestMessageHandler):
@@ -74,7 +74,7 @@ broker_props = {
     "solace.messaging.authentication.scheme.basic.password": os.environ.get('SOLACE_PASSWORD') or ""
     }
 
-request_topic = TOPIC_PREFIX + '/direct/request/>'
+request_topic = TOPIC_PREFIX + '*/direct/request'
 print(f'\nSubscribing to topic {request_topic}')
 
 # Build A messaging service with a reconnection strategy of 20 retries over an interval of 3 seconds
