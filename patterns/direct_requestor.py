@@ -16,11 +16,6 @@ if platform.uname().system == 'Windows': os.environ["PYTHONUNBUFFERED"] = "1" # 
 
 TOPIC_PREFIX = "solace/samples/python"
 
-name = ""
-while not name:
-    name = input("Enter your name: ")
-unique_name = name.replace(" ", "")
-
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
     def on_reconnected(self, e: ServiceEvent):
@@ -73,7 +68,8 @@ direct_requestor.start()
 print(f'\nDirect Requestor ready? {direct_requestor.is_ready()}')
 
 # Prepare outbound message payload and body
-message_body = "This is request message from " + f'{name}'
+topic = Topic.of(TOPIC_PREFIX + '/direct/request')
+message_body = "This is request message from direct requestor on " + f'{topic}'
 outbound_msg_builder = messaging_service.message_builder() \
                 .with_property("application", "samples") \
                 .with_property("language", "Python")
@@ -85,7 +81,6 @@ message_id = calendar.timegm(gmt)
 print('\nSend a KeyboardInterrupt to stop publishing')
 try: 
     print(f'============================')
-    topic = Topic.of(TOPIC_PREFIX + '/direct/request/'  + f'{unique_name}')
     print(f'Publishing to topic:\n{topic}')
 
     try:
