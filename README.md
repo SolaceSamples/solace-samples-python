@@ -65,5 +65,5 @@ For example should the broker have a server certificate derived from the public_
 ## Resources
 
 - Solace Developer Portal is at [solace.dev](https://solace.dev)
-- Ask the [Solace Community](https://solace.community/categories/python-api) for further discussions and questions.
+- Ask the [Solace Community](https://solace.community) for further discussions and questions.
 - Official python documentation on [https://docs.solace.com/Solace-PubSub-Messaging-APIs/Python-API/python-home.htm](https://docs.solace.com/Solace-PubSub-Messaging-APIs/Python-API/python-home.htm)
