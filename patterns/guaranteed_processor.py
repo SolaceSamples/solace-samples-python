@@ -52,37 +52,40 @@ class ProcessorImpl(MessageHandler):
                                 .with_property("language", "Python")
 
     def on_message(self, message: InboundMessage):
-        publish_topic = Topic.of(TOPIC_PREFIX + f'/persistent/processor/output')
-        destination_name = message.get_destination_name()
+        try:
+            publish_topic = Topic.of(TOPIC_PREFIX + f'/persistent/processor/output')
+            destination_name = message.get_destination_name()
 
-        # Check if the payload is a String or Byte, decode if its the later
-        payload = message.get_payload_as_string() if message.get_payload_as_string() is not None else message.get_payload_as_bytes()
-        if isinstance(payload, bytearray):
-            print(f"Received a message of type: {type(payload)}. Decoding to string")
-            payload = payload.decode()
+            # Check if the payload is a String or Byte, decode if its the later
+            payload = message.get_payload_as_string() if message.get_payload_as_string() is not None else message.get_payload_as_bytes()
+            if isinstance(payload, bytearray):
+                print(f"Received a message of type: {type(payload)}. Decoding to string")
+                payload = payload.decode()
 
-        print(f'Received input message payload: {payload}')   
+            print(f'Received input message payload: {payload}')   
 
-        # Process the message. For simplicity, we will be uppercasing the payload.
-        processed_payload = payload.upper()
+            # Process the message. For simplicity, we will be uppercasing the payload.
+            processed_payload = payload.upper()
 
-        if message.get_application_message_id() is not None:
-            self.msg_builder = self.msg_builder \
-                                .with_application_message_id(message.get_application_message_id())
+            if message.get_application_message_id() is not None:
+                self.msg_builder = self.msg_builder \
+                                    .with_application_message_id(message.get_application_message_id())
 
-        output_msg = self.msg_builder.build(f'{processed_payload}')
-        self.publisher.publish(destination=publish_topic, message=output_msg)
+            output_msg = self.msg_builder.build(f'{processed_payload}')
+            self.publisher.publish(destination=publish_topic, message=output_msg)
 
-        print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-        print(f'Received input message on {destination_name}')
-        print(f'Received input message (body): {payload}')
-        # print(f'Received input message dump (body):{message}')
-        print(f'----------------------------')
-        print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        print(f'Published output message to: {publish_topic}')
-        print(f'Published output message (body): {processed_payload}')
-        # print(f'Published output message dump (body):{output_msg}')
-        print(f'----------------------------')
+            print(f'<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+            print(f'Received input message on {destination_name}')
+            print(f'Received input message (body): {payload}')
+            # print(f'Received input message dump (body):{message}')
+            print(f'----------------------------')
+            print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+            print(f'Published output message to: {publish_topic}')
+            print(f'Published output message (body): {processed_payload}')
+            # print(f'Published output message dump (body):{output_msg}')
+            print(f'----------------------------')
+        except Exception as e:
+            print(f'Error processing message: {e.__traceback__}')
 
 class MessageReceiptListener(MessagePublishReceiptListener):
     def __init__(self):

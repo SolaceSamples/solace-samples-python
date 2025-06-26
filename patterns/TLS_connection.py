@@ -20,11 +20,14 @@ TOPIC_PREFIX = "solace/samples/python"
 # Handle received messages
 class MessageHandlerImpl(MessageHandler):
     def on_message(self, message: InboundMessage):
-        topic = message.get_destination_name()
-        payload_str = message.get_payload_as_string()
-        print("\n" + f"Message Payload String: {payload_str} \n")
-        print("\n" + f"Message Topic: {topic} \n")
-        print("\n" + f"Message dump: {message} \n")
+        try:
+            topic = message.get_destination_name()
+            payload_str = message.get_payload_as_string()
+            print("\n" + f"Message Payload String: {payload_str} \n")
+            print("\n" + f"Message Topic: {topic} \n")
+            print("\n" + f"Message dump: {message} \n")
+        except Exception as e:
+            print(f"Error processing message: {e.__traceback__}")
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):

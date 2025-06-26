@@ -18,19 +18,22 @@ SHUTDOWN = False
 # Handle received messages
 class MessageHandlerImpl(MessageHandler):
     def on_message(self, message: 'InboundMessage'):
-        global SHUTDOWN
-        if "quit" in message.get_destination_name():
-            print("QUIT message received, shutting down.")
-            SHUTDOWN = True 
+        try:
+            global SHUTDOWN
+            if "quit" in message.get_destination_name():
+                print("QUIT message received, shutting down.")
+                SHUTDOWN = True 
+                
+            # Check if the payload is a String or Byte, decode if its the later
+            payload = message.get_payload_as_string() if message.get_payload_as_string() is not None else message.get_payload_as_bytes()
+            if isinstance(payload, bytearray):
+                print(f"Received a message of type: {type(payload)}. Decoding to string")
+                payload = payload.decode()
             
-        # Check if the payload is a String or Byte, decode if its the later
-        payload = message.get_payload_as_string() if message.get_payload_as_string() is not None else message.get_payload_as_bytes()
-        if isinstance(payload, bytearray):
-            print(f"Received a message of type: {type(payload)}. Decoding to string")
-            payload = payload.decode()
-        
-        print("\n" + f"Message payload: {payload} \n")
-        print("\n" + f"Message dump: {message} \n")
+            print("\n" + f"Message payload: {payload} \n")
+            print("\n" + f"Message dump: {message} \n")
+        except Exception as e:
+            print(f"Error processing message: {e.__traceback__}")
 
 # Inner classes for error handling
 class ServiceEventHandler(ReconnectionListener, ReconnectionAttemptListener, ServiceInterruptionListener):
