@@ -141,7 +141,7 @@ try:
         print('\nDisconnecting Messaging Service')
 # Handle API exception 
 except PubSubPlusClientError as exception:
-  print(f'\nMake sure queue {queue_name} exists on broker!')
+  print(f'\nError occurred: {exception}')
 
 finally:
     print('\nTerminating receiver')
