@@ -1,20 +1,11 @@
 """sampler to configure the maximum number of unacknowledged messages for a persistent receiver"""
 
-import threading
-from typing import TypeVar
-
 from solace.messaging.messaging_service import MessagingService
 from solace.messaging.receiver.inbound_message import InboundMessage
 from solace.messaging.receiver.persistent_message_receiver import PersistentMessageReceiver
 from solace.messaging.resources.queue import Queue
 from solace.messaging.config.solace_properties.receiver_properties import PERSISTENT_MAX_UNACKED_MESSAGES
-from howtos.sampler_boot import SolaceConstants, SamplerBoot
 from howtos.sampler_master import SamplerMaster
-
-X = TypeVar('X')
-constants = SolaceConstants
-boot = SamplerBoot()
-lock = threading.Lock()
 
 
 class HowToConfigureReceiverMaxUnackedMessages:
