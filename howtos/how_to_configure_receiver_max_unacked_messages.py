@@ -26,12 +26,12 @@ class HowToConfigureReceiverMaxUnackedMessages:
     """
 
     @staticmethod
-    def using_builder_method(service: MessagingService, queue_to_consume: Queue):
+    def using_builder_method(service: MessagingService, queue_to_consume: Queue, max_unacked_messages: int):
         """Configure max unacked messages using the fluent builder method"""
         receiver = None
         try:
             receiver: PersistentMessageReceiver = service.create_persistent_message_receiver_builder() \
-                .with_max_unacked_messages(1) \
+                .with_max_unacked_messages(max_unacked_messages) \
                 .build(queue_to_consume)
             receiver.start()
             message: InboundMessage = receiver.receive_message(timeout=5000)
@@ -43,12 +43,12 @@ class HowToConfigureReceiverMaxUnackedMessages:
                 receiver.terminate()
 
     @staticmethod
-    def using_properties_map(service: MessagingService, queue_to_consume: Queue):
+    def using_properties_map(service: MessagingService, queue_to_consume: Queue, max_unacked_messages: int):
         """Configure max unacked messages using the from_properties builder method"""
         receiver = None
         try:
             receiver: PersistentMessageReceiver = service.create_persistent_message_receiver_builder() \
-                .from_properties({PERSISTENT_MAX_UNACKED_MESSAGES: 1}) \
+                .from_properties({PERSISTENT_MAX_UNACKED_MESSAGES: max_unacked_messages}) \
                 .build(queue_to_consume)
             receiver.start()
             message: InboundMessage = receiver.receive_message(timeout=5000)
@@ -64,12 +64,15 @@ class HowToConfigureReceiverMaxUnackedMessages:
         messaging_service = None
         try:
             queue_name = 'Q/test/max_unacked'
+            max_unacked_messages = 10
             messaging_service = SamplerMaster.connect_messaging_service()
             durable_exclusive_queue = Queue.durable_exclusive_queue(queue_name)
             HowToConfigureReceiverMaxUnackedMessages \
-                .using_builder_method(service=messaging_service, queue_to_consume=durable_exclusive_queue)
+                .using_builder_method(service=messaging_service, queue_to_consume=durable_exclusive_queue,
+                                      max_unacked_messages=max_unacked_messages)
             HowToConfigureReceiverMaxUnackedMessages \
-                .using_properties_map(service=messaging_service, queue_to_consume=durable_exclusive_queue)
+                .using_properties_map(service=messaging_service, queue_to_consume=durable_exclusive_queue,
+                                      max_unacked_messages=max_unacked_messages)
         finally:
             if messaging_service:
                 messaging_service.disconnect()
