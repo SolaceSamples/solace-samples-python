@@ -1,4 +1,6 @@
 """sampler to configure the maximum number of unacknowledged messages for a persistent receiver"""
+# Note: This assumes that a durable queue already exists on the event broker.
+# See https://docs.solace.com/Solace-PubSub-Messaging-APIs/API-Developer-Guide/Adding-Topic-Subscriptio.htm for more details
 
 from solace.messaging.messaging_service import MessagingService
 from solace.messaging.receiver.inbound_message import InboundMessage
@@ -54,6 +56,7 @@ class HowToConfigureReceiverMaxUnackedMessages:
     def run():
         messaging_service = None
         try:
+            # NOTE: This assumes that a durable queue with this name already exists on the broker
             queue_name = 'Q/test/max_unacked'
             max_unacked_messages = 10
             messaging_service = SamplerMaster.connect_messaging_service()
