@@ -1,26 +1,19 @@
 """sampler for browsing messages on a queue without consuming them"""
 
 import time
-import threading
-from typing import TypeVar
 
 from solace.messaging.messaging_service import MessagingService
 from solace.messaging.receiver.inbound_message import InboundMessage
 from solace.messaging.receiver.queue_browser import MessageQueueBrowser
 from solace.messaging.resources.queue import Queue
 from solace.messaging.resources.topic import Topic
-from solace.messaging.resources.topic_subscription import TopicSubscription
 from solace.messaging.config.solace_properties.message_properties import CORRELATION_ID, PRIORITY
 from howtos.pubsub.how_to_consume_persistent_message import HowToConsumeMessageExclusiveVsSharedMode
 from howtos.pubsub.how_to_publish_persistent_message import HowToPublishPersistentMessage
-from howtos.sampler_boot import SolaceConstants, SamplerBoot
+from howtos.sampler_boot import SolaceConstants
 from howtos.sampler_master import SamplerMaster
 
-X = TypeVar('X')
 constants = SolaceConstants
-boot = SamplerBoot()
-lock = threading.Lock()
-
 topic_name = constants.TOPIC_ENDPOINT_DEFAULT
 topic = Topic.of(topic_name)
 
