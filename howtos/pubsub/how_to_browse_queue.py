@@ -1,7 +1,5 @@
 """sampler for browsing messages on a queue without consuming them"""
 
-import time
-
 from solace.messaging.messaging_service import MessagingService
 from solace.messaging.receiver.inbound_message import InboundMessage
 from solace.messaging.receiver.queue_browser import MessageQueueBrowser
@@ -54,9 +52,9 @@ class HowToBrowseQueue:
             print(f'Queue browser started... Browsing Queue [{queue_to_browse.get_name()}]')
 
             for i in range(num_messages):
-                HowToPublishPersistentMessage.publish_string_message_non_blocking(
-                    publisher, topic, f'{constants.MESSAGE_TO_SEND} - msg {i}')
-            time.sleep(1)
+                publisher.publish_await_acknowledgement(
+                    f'{constants.MESSAGE_TO_SEND} - msg {i}', topic, time_out=constants.DEFAULT_TIMEOUT_MS)
+                print(f'Published msg {i} to topic [{topic.get_name()}]')
 
             browse_count = 0
             while True:
@@ -99,16 +97,17 @@ class HowToBrowseQueue:
 
             matching_msg = outbound_msg.build(payload='matching message')
             matching_props = {CORRELATION_ID: 'browse-me', PRIORITY: 1}
-            publisher.publish(matching_msg, topic, additional_message_properties=matching_props)
+            publisher.publish_await_acknowledgement(
+                matching_msg, topic, time_out=constants.DEFAULT_TIMEOUT_MS,
+                additional_message_properties=matching_props)
             print('Published matching message with CorrelationID=browse-me')
-            time.sleep(2)
 
             non_matching_msg = outbound_msg.build(payload='non-matching message')
             non_matching_props = {CORRELATION_ID: 'skip-me', PRIORITY: 1}
-            publisher.publish(non_matching_msg, topic, additional_message_properties=non_matching_props)
+            publisher.publish_await_acknowledgement(
+                non_matching_msg, topic, time_out=constants.DEFAULT_TIMEOUT_MS,
+                additional_message_properties=non_matching_props)
             print('Published non-matching message with CorrelationID=skip-me')
-            time.sleep(2)
-            time.sleep(1)
 
             browse_count = 0
             while True:
@@ -142,13 +141,12 @@ class HowToBrowseQueue:
             browser.start()
             print(f'Queue browser started for browse-and-remove... Browsing Queue [{queue_to_browse.get_name()}]')
 
-            HowToPublishPersistentMessage.publish_string_message_non_blocking(
-                publisher, topic, 'message to keep')
-            HowToPublishPersistentMessage.publish_string_message_non_blocking(
-                publisher, topic, 'message to remove')
-            HowToPublishPersistentMessage.publish_string_message_non_blocking(
-                publisher, topic, 'another message to keep')
-            time.sleep(1)
+            publisher.publish_await_acknowledgement(
+                'message to keep', topic, time_out=constants.DEFAULT_TIMEOUT_MS)
+            publisher.publish_await_acknowledgement(
+                'message to remove', topic, time_out=constants.DEFAULT_TIMEOUT_MS)
+            publisher.publish_await_acknowledgement(
+                'another message to keep', topic, time_out=constants.DEFAULT_TIMEOUT_MS)
 
             browse_count = 0
             removed_count = 0
@@ -194,9 +192,9 @@ class HowToBrowseQueue:
                   f'Browsing Queue [{queue_to_browse.get_name()}]')
 
             for i in range(5):
-                HowToPublishPersistentMessage.publish_string_message_non_blocking(
-                    publisher, topic, f'{constants.MESSAGE_TO_SEND} - windowed msg {i}')
-            time.sleep(1)
+                publisher.publish_await_acknowledgement(
+                    f'{constants.MESSAGE_TO_SEND} - windowed msg {i}', topic,
+                    time_out=constants.DEFAULT_TIMEOUT_MS)
 
             browse_count = 0
             while True:
